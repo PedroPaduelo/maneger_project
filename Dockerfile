@@ -46,7 +46,7 @@ COPY --from=base --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=base --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
 
 # Copiar package.json e package-lock.json
-COPY --from=base package.json package-lock.json ./
+COPY --from=base /app/package.json /app/package-lock.json ./
 
 # Instalar apenas dependências de produção
 RUN npm ci --only=production && npm cache clean --force
