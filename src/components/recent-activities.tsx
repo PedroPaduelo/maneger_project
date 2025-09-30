@@ -193,10 +193,10 @@ export function RecentActivities({
       }
     });
 
-    // Sort by timestamp (most recent first) and take last 20
+    // Sort by timestamp (most recent first) and take last 6
     const sortedActivities = newActivities
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-      .slice(0, 20);
+      .slice(0, 6);
 
     setActivities(sortedActivities);
     setLoading(false);
@@ -217,13 +217,13 @@ export function RecentActivities({
 
   const getActivityColor = (type: string, action: string) => {
     if (action === 'completed') {
-      return "text-green-600 bg-green-50 border-green-200";
+      return "text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-800";
     } else if (action === 'created') {
-      return "text-blue-600 bg-blue-50 border-blue-200";
+      return "text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800";
     } else if (action === 'updated') {
-      return "text-orange-600 bg-orange-50 border-orange-200";
+      return "text-orange-700 dark:text-orange-300 bg-orange-100 dark:bg-orange-900/30 border-orange-200 dark:border-orange-800";
     }
-    return "text-gray-600 bg-gray-50 border-gray-200";
+    return "text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700";
   };
 
   const getStatusBadge = (status?: string, priority?: string) => {
@@ -325,7 +325,7 @@ export function RecentActivities({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="max-h-[400px]">
+        <ScrollArea className="max-h-[350px]">
           <div className="space-y-4">
             {activities.length === 0 ? (
               <div className="text-center py-8">
@@ -351,11 +351,11 @@ export function RecentActivities({
                     </Avatar>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-gray-900">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                      <p className="text-sm font-medium text-foreground break-words pr-2">
                         {activity.title}
                       </p>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 flex-shrink-0">
                         {getStatusBadge(activity.status, activity.priority)}
                         {activity.progress !== undefined && (
                           <Badge variant="outline">{activity.progress}%</Badge>
@@ -363,20 +363,20 @@ export function RecentActivities({
                       </div>
                     </div>
                     {activity.description && (
-                      <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                         {activity.description}
                       </p>
                     )}
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center space-x-2">
-                        <User className="h-3 w-3 text-gray-400" />
-                        <span className="text-xs text-gray-500">
+                        <User className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">
                           {activity.author}
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Calendar className="h-3 w-3 text-gray-400" />
-                        <span className="text-xs text-gray-500">
+                        <Calendar className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">
                           {formatTimeAgo(activity.timestamp)}
                         </span>
                       </div>
