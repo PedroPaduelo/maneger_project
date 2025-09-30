@@ -8,11 +8,11 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Copiar arquivos de configuração
-COPY package.json package-lock.json* ./
+COPY package.json package-lock.json ./
 COPY prisma ./prisma/
 
 # Instalar dependências
-RUN npm ci --only=production=false
+RUN npm ci
 
 # Gerar Prisma client
 RUN npx prisma generate
