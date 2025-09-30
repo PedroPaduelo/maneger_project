@@ -1,0 +1,228 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { Server } from "socket.io";
+
+// Get Socket.IO server instance
+let io: Server | null = null;
+
+// This is a workaround to get the Socket.IO instance
+// In a real app, you would properly inject this
+if (typeof global !== 'undefined') {
+  io = (global as any).io;
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const project = await db.project.findFirst({
+      where: {
+        id: parseInt(params.id),
+        userId: session.user.id
+      },
+      include: {
+        tasks: {
+          include: {
+            taskTodos: true,
+            requirementTasks: {
+              include: {
+                requirement: true
+              }
+            }
+          }
+        },
+        requirements: {
+          include: {
+            requirementTasks: {
+              include: {
+                task: true
+              }
+            }
+          }
+        },
+        historySummaries: true,
+        projectTags: {
+          include: {
+            tag: true
+          }
+        }
+      }
+    });
+
+    if (!project) {
+      return NextResponse.json(
+        { error: "Project not found or access denied" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(project);
+  } catch (error) {
+    console.error("Error fetching project:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch project" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
+    
+    // Verify that the project belongs to the authenticated user
+    const existingProject = await db.project.findFirst({
+      where: {
+        id: parseInt(params.id),
+        userId: session.user.id
+      }
+    });
+    
+    if (!existingProject) {
+      return NextResponse.json(
+        { error: "Project not found or access denied" },
+        { status: 404 }
+      );
+    }
+    
+    const project = await db.project.update({
+      where: {
+        id: parseInt(params.id)
+      },
+      data: {
+        name: body.name,
+        description: body.description,
+        stack: body.stack,
+        notes: body.notes,
+        status: body.status,
+        priority: body.priority,
+        progress: body.progress,
+        isFavorite: body.isFavorite,
+        color: body.color,
+        tags: body.tags
+      },
+      include: {
+        tasks: {
+          include: {
+            taskTodos: true,
+            requirementTasks: {
+              include: {
+                requirement: true
+              }
+            }
+          }
+        },
+        requirements: {
+          include: {
+            requirementTasks: {
+              include: {
+                task: true
+              }
+            }
+          }
+        },
+        historySummaries: true,
+        projectTags: {
+          include: {
+            tag: true
+          }
+        }
+      }
+    });
+
+    // Emit WebSocket event for real-time update
+    if (io) {
+      io.emit('project-update', {
+        type: 'project-updated',
+        project,
+        message: `Projeto "${project.name}" foi atualizado`
+      });
+    }
+
+    return NextResponse.json(project);
+  } catch (error) {
+    console.error("Error updating project:", error);
+    return NextResponse.json(
+      { error: "Failed to update project" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+    
+    // Verify that the project belongs to the authenticated user
+    const existingProject = await db.project.findFirst({
+      where: {
+        id: parseInt(params.id),
+        userId: session.user.id
+      }
+    });
+    
+    if (!existingProject) {
+      return NextResponse.json(
+        { error: "Project not found or access denied" },
+        { status: 404 }
+      );
+    }
+    
+    await db.project.delete({
+      where: {
+        id: parseInt(params.id)
+      }
+    });
+
+    // Emit WebSocket event for real-time update
+    if (io) {
+      io.emit('project-update', {
+        type: 'project-deleted',
+        projectId: parseInt(params.id),
+        message: `Projeto "${existingProject.name}" foi excluído`
+      });
+    }
+
+    return NextResponse.json({ message: "Project deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting project:", error);
+    return NextResponse.json(
+      { error: "Failed to delete project" },
+      { status: 500 }
+    );
+  }
+}
