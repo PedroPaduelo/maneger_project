@@ -5,7 +5,7 @@
 Este documento descreve o processo de deploy da aplicação Next.js em diferentes plataformas de produção. A aplicação utiliza:
 
 - Next.js 15 com App Router
-- Prisma ORM com SQLite
+- Prisma ORM com PostgreSQL
 - NextAuth.js para autenticação
 - shadcn/ui para componentes UI
 - Socket.IO para comunicação em tempo real
@@ -51,8 +51,8 @@ NODE_ENV="production"
 NEXTAUTH_URL="https://seu-dominio.com"
 NEXTAUTH_SECRET="sua-chave-secreta-muito-segura-aqui"
 
-# Database (SQLite para produção não recomendado, use PostgreSQL)
-DATABASE_URL="postgresql://usuario:senha@host:porta/database"
+# Database (PostgreSQL remoto)
+DATABASE_URL="postgres://postgres:90e907c02b1910266cb1@cloud.nommand.com:54342/desk?sslmode=disable"
 ```
 
 #### 1.3. Deploy
@@ -102,7 +102,7 @@ Configure no painel do Netlify:
 NODE_ENV="production"
 NEXTAUTH_URL="https://seu-dominio.com"
 NEXTAUTH_SECRET="sua-chave-secreta"
-DATABASE_URL="postgresql://usuario:senha@host:porta/database"
+DATABASE_URL="postgres://postgres:90e907c02b1910266cb1@cloud.nommand.com:54342/desk?sslmode=disable"
 ```
 
 #### 2.3. Deploy
@@ -190,7 +190,7 @@ module.exports = {
       NODE_ENV: 'production',
       NEXTAUTH_URL: 'https://seu-dominio.com',
       NEXTAUTH_SECRET: 'sua-chave-secreta',
-      DATABASE_URL: 'postgresql://usuario:senha@host:porta/database'
+      DATABASE_URL: 'postgres://postgres:90e907c02b1910266cb1@cloud.nommand.com:54342/desk?sslmode=disable'
     }
   }]
 }
@@ -293,7 +293,7 @@ services:
       - NODE_ENV=production
       - NEXTAUTH_URL=https://seu-dominio.com
       - NEXTAUTH_SECRET=sua-chave-secreta
-      - DATABASE_URL=postgresql://user:pass@db:5432/database
+      - DATABASE_URL=postgres://postgres:90e907c02b1910266cb1@cloud.nommand.com:54342/desk?sslmode=disable
     depends_on:
       - db
     restart: unless-stopped
@@ -328,35 +328,29 @@ docker-compose down
 
 ## Configuração de Banco de Dados em Produção
 
-### Migrando do SQLite para PostgreSQL
+### Banco de Dados Remoto PostgreSQL
 
-#### 1. Configurar PostgreSQL
-
-```sql
--- Criar banco de dados
-CREATE DATABASE seu_produto;
-
--- Criar usuário
-CREATE USER seu_usuario WITH PASSWORD 'sua_senha';
-
--- Conceder permissões
-GRANT ALL PRIVILEGES ON DATABASE seu_produto TO seu_usuario;
-```
-
-#### 2. Atualizar Variáveis de Ambiente
+O projeto já está configurado para usar um banco de dados PostgreSQL remoto:
 
 ```env
-# Antes (SQLite)
-DATABASE_URL="file:./dev.db"
-
-# Depois (PostgreSQL)
-DATABASE_URL="postgresql://seu_usuario:sua_senha@localhost:5432/seu_produto"
+DATABASE_URL="postgres://postgres:90e907c02b1910266cb1@cloud.nommand.com:54342/desk?sslmode=disable"
 ```
 
-#### 3. Rodar Migrations
+#### 1. Schema do Banco de Dados
+
+O schema do Prisma já está configurado para PostgreSQL:
+
+```prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+```
+
+#### 2. Rodar Migrations
 
 ```bash
-# Gerar migrations
+# Gerar migrations (se necessário)
 npx prisma migrate dev --name init
 
 # Rodar migrations em produção
@@ -366,7 +360,7 @@ npx prisma migrate deploy
 npx prisma generate
 ```
 
-#### 4. Dados de Produção
+#### 3. Dados de Produção
 
 ```bash
 # Criar usuário admin em produção
