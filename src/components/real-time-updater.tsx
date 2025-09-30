@@ -70,7 +70,7 @@ export function RealTimeUpdater({ onDataUpdate }: RealTimeUpdaterProps) {
     onDataUpdate?.(data)
   }
 
-  useSocket(process.env.NODE_ENV === "production" ? "" : "http://localhost:3000", handleSocketMessage)
+  useSocket(process.env.NODE_ENV === "production" ? "https://desk-testsetsetse.mrt7ga.easypanel.host" : "http://localhost:3000", handleSocketMessage)
 
   return null // This component doesn't render anything
 }

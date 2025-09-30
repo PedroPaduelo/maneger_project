@@ -2,6 +2,16 @@ import { db } from "./src/lib/db";
 
 async function seed() {
   try {
+    // Get the admin user
+    const adminUser = await db.user.findUnique({
+      where: { email: "admin@demo.com" }
+    });
+
+    if (!adminUser) {
+      console.log("Admin user not found. Please run seed-user.ts first.");
+      return;
+    }
+
     // Create sample projects
     const projects = await Promise.all([
       db.project.create({
@@ -20,7 +30,8 @@ async function seed() {
             client: "TechCorp",
             deadline: "2024-03-31",
             budget: 50000
-          }
+          },
+          userId: adminUser.id
         }
       }),
       db.project.create({
@@ -39,7 +50,8 @@ async function seed() {
             client: "StartupXYZ",
             deadline: "2024-06-30",
             budget: 35000
-          }
+          },
+          userId: adminUser.id
         }
       }),
       db.project.create({
@@ -58,7 +70,8 @@ async function seed() {
             client: "Internal",
             deadline: "2024-09-30",
             budget: 25000
-          }
+          },
+          userId: adminUser.id
         }
       })
     ]);
