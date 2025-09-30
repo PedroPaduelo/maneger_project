@@ -23,7 +23,8 @@
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,md}\"",
     "test": "echo \"No tests specified\" && exit 0",
-    "prepare": "husky install",
+    "prepare": "node -e \"try { require('husky').install(); } catch (e) { console.log('husky not found, skipping git hooks setup'); }\"",
+    "postinstall": "prisma generate",
     "bundle-analyzer": "ANALYZE=true npm run build"
   },
   "dependencies": {
