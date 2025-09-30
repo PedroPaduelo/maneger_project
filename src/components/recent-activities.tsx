@@ -193,10 +193,10 @@ export function RecentActivities({
       }
     });
 
-    // Sort by timestamp (most recent first) and take last 6
+    // Sort by timestamp (most recent first) and take last 3
     const sortedActivities = newActivities
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-      .slice(0, 6);
+      .slice(0, 3);
 
     setActivities(sortedActivities);
     setLoading(false);
