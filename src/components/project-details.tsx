@@ -387,7 +387,10 @@ export function ProjectDetails() {
                   ))}
                 </div>
               ) : (
-                <TaskTable tasks={project.tasks} />
+                <TaskTable
+                  tasks={project.tasks}
+                  availableCreators={[...new Set(project.tasks.map(task => task.createdBy))]}
+                />
               )}
             </>
           )}
@@ -422,7 +425,12 @@ export function ProjectDetails() {
                   ))}
                 </div>
               ) : (
-                <RequirementTable requirements={project.requirements} />
+                <RequirementTable
+                  requirements={project.requirements}
+                  availableCategories={[...new Set(project.requirements
+                    .map(req => req.category)
+                    .filter(Boolean) as string[])]}
+                />
               )}
             </>
           )}

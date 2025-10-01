@@ -26,11 +26,14 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useRouter } from "next/navigation";
 import { EditRequirementDialog } from "@/components/edit-requirement-dialog";
+import { RequirementFilters } from "@/components/requirement-filters";
 import {
   ColumnDef,
+  ColumnFiltersState,
   SortingState,
   flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
@@ -38,11 +41,79 @@ import {
 
 interface RequirementTableProps {
   requirements: Requirement[];
+  availableCategories: string[];
 }
 
-export function RequirementTable({ requirements }: RequirementTableProps) {
+export function RequirementTable({ requirements, availableCategories }: RequirementTableProps) {
   const router = useRouter();
   const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [globalFilter, setGlobalFilter] = React.useState("");
+
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [typeFilter, setTypeFilter] = React.useState<string[]>([]);
+  const [priorityFilter, setPriorityFilter] = React.useState<string[]>([]);
+  const [categoryFilter, setCategoryFilter] = React.useState("all");
+
+  // Apply filters to the data
+  const filteredData = React.useMemo(() => {
+    let filtered = requirements;
+
+    // Global search
+    if (globalFilter) {
+      filtered = filtered.filter((requirement) =>
+        requirement.title.toLowerCase().includes(globalFilter.toLowerCase()) ||
+        requirement.description?.toLowerCase().includes(globalFilter.toLowerCase()) ||
+        requirement.category?.toLowerCase().includes(globalFilter.toLowerCase())
+      );
+    }
+
+    // Type filter
+    if (typeFilter.length > 0) {
+      filtered = filtered.filter((requirement) => typeFilter.includes(requirement.type));
+    }
+
+    // Priority filter
+    if (priorityFilter.length > 0) {
+      filtered = filtered.filter((requirement) => priorityFilter.includes(requirement.priority));
+    }
+
+    // Category filter
+    if (categoryFilter !== "all") {
+      filtered = filtered.filter((requirement) => requirement.category === categoryFilter);
+    }
+
+    return filtered;
+  }, [requirements, globalFilter, typeFilter, priorityFilter, categoryFilter]);
+
+  // Update global filter when search term changes
+  React.useEffect(() => {
+    setGlobalFilter(searchTerm);
+  }, [searchTerm]);
+
+  // Apply type filter
+  React.useEffect(() => {
+    const typeColumnFilter = typeFilter.length > 0
+      ? { id: "type", value: typeFilter }
+      : null;
+
+    setColumnFilters(prev => {
+      const filtered = prev.filter(f => f.id !== "type");
+      return typeColumnFilter ? [...filtered, typeColumnFilter] : filtered;
+    });
+  }, [typeFilter]);
+
+  // Apply priority filter
+  React.useEffect(() => {
+    const priorityColumnFilter = priorityFilter.length > 0
+      ? { id: "priority", value: priorityFilter }
+      : null;
+
+    setColumnFilters(prev => {
+      const filtered = prev.filter(f => f.id !== "priority");
+      return priorityColumnFilter ? [...filtered, priorityColumnFilter] : filtered;
+    });
+  }, [priorityFilter]);
 
   const handleRequirementUpdated = () => {
     window.location.reload();
@@ -219,14 +290,19 @@ export function RequirementTable({ requirements }: RequirementTableProps) {
   ];
 
   const table = useReactTable({
-    data: requirements,
+    data: filteredData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
     state: {
       sorting,
+      columnFilters,
+      globalFilter,
     },
     initialState: {
       pagination: {
@@ -235,8 +311,30 @@ export function RequirementTable({ requirements }: RequirementTableProps) {
     },
   });
 
+  const resetFilters = () => {
+    setSearchTerm("");
+    setTypeFilter([]);
+    setPriorityFilter([]);
+    setCategoryFilter("all");
+    setColumnFilters([]);
+  };
+
   return (
     <div className="space-y-4">
+      {/* Filtros */}
+      <RequirementFilters
+        searchTerm={searchTerm}
+        onSearchTermChange={setSearchTerm}
+        typeFilter={typeFilter}
+        onTypeFilterChange={setTypeFilter}
+        priorityFilter={priorityFilter}
+        onPriorityFilterChange={setPriorityFilter}
+        categoryFilter={categoryFilter}
+        onCategoryFilterChange={setCategoryFilter}
+        resetFilters={resetFilters}
+        availableCategories={availableCategories}
+      />
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -277,7 +375,10 @@ export function RequirementTable({ requirements }: RequirementTableProps) {
       {/* Controles de Paginação */}
       <div className="flex items-center justify-between px-2">
         <div className="flex-1 text-sm text-muted-foreground">
-          Mostrando {table.getRowModel().rows.length} de {requirements.length} requisitos
+          Mostrando {table.getRowModel().rows.length} de {filteredData.length} requisitos
+          {filteredData.length !== requirements.length && (
+            <span> (de {requirements.length} totais)</span>
+          )}
         </div>
         <div className="flex items-center space-x-6 lg:space-x-8">
           <div className="flex items-center space-x-2">

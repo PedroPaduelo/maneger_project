@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
     // 构建时忽略ESLint错误
     ignoreDuringBuilds: true,
   },
+  // Saída standalone para Docker
+  output: 'standalone',
   // Otimizações para Docker
   experimental: {
     // Habilitar otimizações de imagem

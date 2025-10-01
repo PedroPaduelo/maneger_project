@@ -28,11 +28,14 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useRouter } from "next/navigation";
 import { EditTaskDialog } from "@/components/edit-task-dialog";
+import { TaskFilters } from "@/components/task-filters";
 import {
   ColumnDef,
+  ColumnFiltersState,
   SortingState,
   flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
@@ -40,11 +43,69 @@ import {
 
 interface TaskTableProps {
   tasks: Task[];
+  availableCreators: string[];
 }
 
-export function TaskTable({ tasks }: TaskTableProps) {
+export function TaskTable({ tasks, availableCreators }: TaskTableProps) {
   const router = useRouter();
   const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [globalFilter, setGlobalFilter] = React.useState("");
+
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [statusFilter, setStatusFilter] = React.useState<string[]>([]);
+  const [hasTodosFilter, setHasTodosFilter] = React.useState("all");
+  const [createdByFilter, setCreatedByFilter] = React.useState("all");
+
+  // Apply filters to the data
+  const filteredData = React.useMemo(() => {
+    let filtered = tasks;
+
+    // Global search
+    if (globalFilter) {
+      filtered = filtered.filter((task) =>
+        task.title.toLowerCase().includes(globalFilter.toLowerCase()) ||
+        task.description?.toLowerCase().includes(globalFilter.toLowerCase()) ||
+        task.additionalInformation?.toLowerCase().includes(globalFilter.toLowerCase())
+      );
+    }
+
+    // Status filter
+    if (statusFilter.length > 0) {
+      filtered = filtered.filter((task) => statusFilter.includes(task.status));
+    }
+
+    // Has todos filter
+    if (hasTodosFilter === "with-todos") {
+      filtered = filtered.filter((task) => task.taskTodos.length > 0);
+    } else if (hasTodosFilter === "without-todos") {
+      filtered = filtered.filter((task) => task.taskTodos.length === 0);
+    }
+
+    // Created by filter
+    if (createdByFilter !== "all") {
+      filtered = filtered.filter((task) => task.createdBy === createdByFilter);
+    }
+
+    return filtered;
+  }, [tasks, globalFilter, statusFilter, hasTodosFilter, createdByFilter]);
+
+  // Update global filter when search term changes
+  React.useEffect(() => {
+    setGlobalFilter(searchTerm);
+  }, [searchTerm]);
+
+  // Apply status filter
+  React.useEffect(() => {
+    const statusColumnFilter = statusFilter.length > 0
+      ? { id: "status", value: statusFilter }
+      : null;
+
+    setColumnFilters(prev => {
+      const filtered = prev.filter(f => f.id !== "status");
+      return statusColumnFilter ? [...filtered, statusColumnFilter] : filtered;
+    });
+  }, [statusFilter]);
 
   const handleTaskUpdated = () => {
     window.location.reload();
@@ -249,14 +310,19 @@ export function TaskTable({ tasks }: TaskTableProps) {
   ];
 
   const table = useReactTable({
-    data: tasks,
+    data: filteredData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
     state: {
       sorting,
+      columnFilters,
+      globalFilter,
     },
     initialState: {
       pagination: {
@@ -265,8 +331,30 @@ export function TaskTable({ tasks }: TaskTableProps) {
     },
   });
 
+  const resetFilters = () => {
+    setSearchTerm("");
+    setStatusFilter([]);
+    setHasTodosFilter("all");
+    setCreatedByFilter("all");
+    setColumnFilters([]);
+  };
+
   return (
     <div className="space-y-4">
+      {/* Filtros */}
+      <TaskFilters
+        searchTerm={searchTerm}
+        onSearchTermChange={setSearchTerm}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
+        hasTodosFilter={hasTodosFilter}
+        onHasTodosFilterChange={setHasTodosFilter}
+        createdByFilter={createdByFilter}
+        onCreatedByFilterChange={setCreatedByFilter}
+        resetFilters={resetFilters}
+        availableCreators={availableCreators}
+      />
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -307,7 +395,10 @@ export function TaskTable({ tasks }: TaskTableProps) {
       {/* Controles de Paginação */}
       <div className="flex items-center justify-between px-2">
         <div className="flex-1 text-sm text-muted-foreground">
-          Mostrando {table.getRowModel().rows.length} de {tasks.length} tarefas
+          Mostrando {table.getRowModel().rows.length} de {filteredData.length} tarefas
+          {filteredData.length !== tasks.length && (
+            <span> (de {tasks.length} totais)</span>
+          )}
         </div>
         <div className="flex items-center space-x-6 lg:space-x-8">
           <div className="flex items-center space-x-2">
