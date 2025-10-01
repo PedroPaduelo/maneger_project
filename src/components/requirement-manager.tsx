@@ -547,7 +547,7 @@ export function RequirementManager() {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Tarefas concluídas</span>
                 <Badge variant="default">
-                  {requirement.requirementTasks.filter((rt: any) => rt.task.status === "Concluído").length}
+                  {requirement.requirementTasks.filter((rt: any) => rt.task.status === "Concluída").length}
                 </Badge>
               </div>
               <div className="flex items-center justify-between">

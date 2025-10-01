@@ -88,7 +88,7 @@ export function TaskManager() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Concluído":
+      case "Concluída":
         return "bg-green-500";
       case "Em Progresso":
         return "bg-blue-500";
@@ -103,7 +103,7 @@ export function TaskManager() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "Concluído":
+      case "Concluída":
         return <CheckCircle className="h-4 w-4 text-green-500" />;
       case "Em Progresso":
         return <Clock className="h-4 w-4 text-blue-500" />;
@@ -361,7 +361,7 @@ export function TaskManager() {
                       <SelectContent>
                         <SelectItem value="Pendente">Pendente</SelectItem>
                         <SelectItem value="Em Progresso">Em Progresso</SelectItem>
-                        <SelectItem value="Concluído">Concluído</SelectItem>
+                        <SelectItem value="Concluída">Concluída</SelectItem>
                         <SelectItem value="Bloqueado">Bloqueado</SelectItem>
                       </SelectContent>
                     </Select>
@@ -393,7 +393,7 @@ export function TaskManager() {
                       rows={3}
                     />
                   </div>
-                  {task.status === "Concluído" && (
+                  {task.status === "Concluída" && (
                     <div>
                       <label className="text-sm font-medium">Resultado</label>
                       <Textarea

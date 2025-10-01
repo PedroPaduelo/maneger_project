@@ -126,7 +126,7 @@ src/
 
 ### Gestão de Tarefas
 - **Todos System**: Checklist para cada tarefa
-- **Status Tracking**: Pendente, Em Progresso, Concluído, Bloqueado
+- **Status Tracking**: Pendente, Em Progresso, Concluída, Bloqueado
 - **Requisitos Associados**: Vincular tarefas a requisitos
 - **Histórico**: Acompanhamento de alterações
 

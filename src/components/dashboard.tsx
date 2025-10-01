@@ -55,7 +55,7 @@ export function Dashboard({ projects, tasks, requirements, historySummaries }: D
   const favoriteProjects = projects.filter(p => p.isFavorite).length;
   
   const totalTasks = tasks.length;
-  const completedTasks = tasks.filter(t => t.status === "Concluído").length;
+  const completedTasks = tasks.filter(t => t.status === "Concluída").length;
   const pendingTasks = tasks.filter(t => t.status === "Pendente").length;
   
   const totalRequirements = requirements.length;
@@ -255,7 +255,7 @@ export function Dashboard({ projects, tasks, requirements, historySummaries }: D
                     <SelectItem value="all">Todos os Status</SelectItem>
                     <SelectItem value="Ativo">Ativo</SelectItem>
                     <SelectItem value="Pausado">Pausado</SelectItem>
-                    <SelectItem value="Concluído">Concluído</SelectItem>
+                    <SelectItem value="Concluída">Concluída</SelectItem>
                     <SelectItem value="Cancelado">Cancelado</SelectItem>
                   </SelectContent>
                 </Select>

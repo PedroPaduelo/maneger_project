@@ -37,7 +37,7 @@ export function PerformanceMetrics({ projects, tasks, requirements }: Performanc
     const monthlyTasks = tasks.filter(t => new Date(t.createdAt) >= lastMonth);
     const monthlyRequirements = requirements.filter(r => new Date(r.createdAt) >= lastMonth);
 
-    const completedTasks = tasks.filter(t => t.status === "Concluído");
+    const completedTasks = tasks.filter(t => t.status === "Concluída");
     const completedThisWeek = completedTasks.filter(t => new Date(t.updatedAt) >= lastWeek);
     const completedThisMonth = completedTasks.filter(t => new Date(t.updatedAt) >= lastMonth);
 
@@ -60,7 +60,7 @@ export function PerformanceMetrics({ projects, tasks, requirements }: Performanc
   // Calculate efficiency metrics
   const calculateEfficiencyMetrics = () => {
     const totalTasks = tasks.length;
-    const completedTasks = tasks.filter(t => t.status === "Concluído").length;
+    const completedTasks = tasks.filter(t => t.status === "Concluída").length;
     const inProgressTasks = tasks.filter(t => t.status === "Em Progresso").length;
     const blockedTasks = tasks.filter(t => t.status === "Bloqueado").length;
 
@@ -75,7 +75,7 @@ export function PerformanceMetrics({ projects, tasks, requirements }: Performanc
     // Calculate task velocity (tasks completed per week)
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const tasksCompletedThisWeek = tasks.filter(
-      t => t.status === "Concluído" && new Date(t.updatedAt) >= oneWeekAgo
+      t => t.status === "Concluída" && new Date(t.updatedAt) >= oneWeekAgo
     ).length;
 
     return {
@@ -90,7 +90,7 @@ export function PerformanceMetrics({ projects, tasks, requirements }: Performanc
   // Calculate project health metrics
   const calculateProjectHealth = () => {
     const activeProjects = projects.filter(p => p.status === "Ativo");
-    const completedProjects = projects.filter(p => p.status === "Concluído");
+    const completedProjects = projects.filter(p => p.status === "Concluída");
     const atRiskProjects = projects.filter(p => p.status === "Pausado" || p.progress < 25);
     const stalledProjects = projects.filter(p => p.status === "Pausado");
 
@@ -118,7 +118,7 @@ export function PerformanceMetrics({ projects, tasks, requirements }: Performanc
     // Calculate on-time delivery (simplified - assuming tasks should be completed within 30 days)
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const oldTasks = tasks.filter(t => new Date(t.createdAt) <= thirtyDaysAgo);
-    const onTimeTasks = oldTasks.filter(t => t.status === "Concluído");
+    const onTimeTasks = oldTasks.filter(t => t.status === "Concluída");
     const onTimeDeliveryRate = oldTasks.length > 0 ? Math.round((onTimeTasks.length / oldTasks.length) * 100) : 0;
 
     return {
@@ -281,7 +281,7 @@ export function PerformanceMetrics({ projects, tasks, requirements }: Performanc
                   <Badge variant="outline">{projectHealth.active}</Badge>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Concluídos</span>
+                  <span className="text-xs text-muted-foreground">Concluídas</span>
                   <Badge variant="default">{projectHealth.completed}</Badge>
                 </div>
               </div>

@@ -27,7 +27,7 @@ export function DashboardCharts({ projects, tasks, requirements }: DashboardChar
   const projectStatusDistribution = {
     Ativo: projects.filter(p => p.status === "Ativo").length,
     Pausado: projects.filter(p => p.status === "Pausado").length,
-    Concluído: projects.filter(p => p.status === "Concluído").length,
+    Concluída: projects.filter(p => p.status === "Concluída").length,
     Cancelado: projects.filter(p => p.status === "Cancelado").length,
   };
 
@@ -52,7 +52,7 @@ export function DashboardCharts({ projects, tasks, requirements }: DashboardChar
 
   // Calculate completion rates
   const taskCompletionRate = tasks.length > 0 ? Math.round((taskStatusDistribution["Concluída"] / tasks.length) * 100) : 0;
-  const projectCompletionRate = projects.length > 0 ? Math.round((projectStatusDistribution.Concluído / projects.length) * 100) : 0;
+  const projectCompletionRate = projects.length > 0 ? Math.round((projectStatusDistribution.Concluída / projects.length) * 100) : 0;
 
   // Get recent activities (last 7 days)
   const getRecentActivities = () => {
@@ -146,7 +146,7 @@ export function DashboardCharts({ projects, tasks, requirements }: DashboardChar
                   <div className={`w-3 h-3 rounded-full ${
                     status === "Ativo" ? "bg-green-500" :
                     status === "Pausado" ? "bg-yellow-500" :
-                    status === "Concluído" ? "bg-blue-500" : "bg-red-500"
+                    status === "Concluída" ? "bg-blue-500" : "bg-red-500"
                   }`} />
                   <span className="text-sm font-medium">{status}</span>
                 </div>
@@ -157,7 +157,7 @@ export function DashboardCharts({ projects, tasks, requirements }: DashboardChar
                       className={`h-2 rounded-full ${
                         status === "Ativo" ? "bg-green-500" :
                         status === "Pausado" ? "bg-yellow-500" :
-                        status === "Concluído" ? "bg-blue-500" : "bg-red-500"
+                        status === "Concluída" ? "bg-blue-500" : "bg-red-500"
                       }`}
                       style={{
                         width: `${projects.length > 0 ? (count / projects.length) * 100 : 0}%`
@@ -299,9 +299,9 @@ export function DashboardCharts({ projects, tasks, requirements }: DashboardChar
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-green-500" />
-                <span className="text-sm">Projetos Concluídos</span>
+                <span className="text-sm">Projetos Concluídas</span>
               </div>
-              <Badge variant="outline">{projectStatusDistribution.Concluído}</Badge>
+              <Badge variant="outline">{projectStatusDistribution.Concluída}</Badge>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">

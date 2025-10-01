@@ -175,7 +175,7 @@ Criar sistema de login JWT
               <SelectContent>
                 <SelectItem value="Pendente">Pendente</SelectItem>
                 <SelectItem value="Em Progresso">Em Progresso</SelectItem>
-                <SelectItem value="Concluído">Concluído</SelectItem>
+                <SelectItem value="Concluída">Concluída</SelectItem>
                 <SelectItem value="Bloqueado">Bloqueado</SelectItem>
               </SelectContent>
             </Select>

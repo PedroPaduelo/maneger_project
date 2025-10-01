@@ -162,7 +162,7 @@ export function CreateProjectDialog({ onProjectCreated }: CreateProjectDialogPro
                 <SelectContent>
                   <SelectItem value="Ativo">Ativo</SelectItem>
                   <SelectItem value="Pausado">Pausado</SelectItem>
-                  <SelectItem value="Concluído">Concluído</SelectItem>
+                  <SelectItem value="Concluída">Concluída</SelectItem>
                   <SelectItem value="Cancelado">Cancelado</SelectItem>
                 </SelectContent>
               </Select>

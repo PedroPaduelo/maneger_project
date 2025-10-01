@@ -127,7 +127,7 @@ export function RecentActivities({
         });
       }
 
-      if (task.status === "Concluído") {
+      if (task.status === "Concluída") {
         newActivities.push({
           id: `task-${task.id}-completed`,
           type: 'task',
@@ -234,7 +234,7 @@ export function RecentActivities({
 
     if (status) {
       switch (status) {
-        case "Concluído":
+        case "Concluída":
           variant = "default";
           label = status;
           break;

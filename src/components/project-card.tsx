@@ -39,7 +39,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
         return "bg-green-500";
       case "Pausado":
         return "bg-yellow-500";
-      case "Concluído":
+      case "Concluída":
         return "bg-blue-500";
       case "Cancelado":
         return "bg-red-500";
@@ -67,7 +67,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
         return <Circle className="h-4 w-4 text-green-500" />;
       case "Pausado":
         return <Clock className="h-4 w-4 text-yellow-500" />;
-      case "Concluído":
+      case "Concluída":
         return <CheckCircle className="h-4 w-4 text-blue-500" />;
       case "Cancelado":
         return <AlertCircle className="h-4 w-4 text-red-500" />;

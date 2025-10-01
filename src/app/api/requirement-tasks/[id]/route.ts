@@ -3,10 +3,11 @@ import { db } from "@/lib/db";
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const requirementTaskId = parseInt(params.id);
+    const resolvedParams = await params;
+    const requirementTaskId = parseInt(resolvedParams.id);
 
     if (isNaN(requirementTaskId)) {
       return NextResponse.json(

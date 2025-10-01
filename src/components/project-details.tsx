@@ -33,6 +33,8 @@ import { CreateRequirementDialog } from "@/components/create-requirement-dialog"
 import { EditProjectDialog } from "@/components/edit-project-dialog";
 import { DeleteProjectDialog } from "@/components/delete-project-dialog";
 import { HistorySummaryManager } from "@/components/history-summary-manager";
+import { TaskTable } from "@/components/task-table";
+import { ViewToggle } from "@/components/view-toggle";
 
 export function ProjectDetails() {
   const params = useParams();
@@ -41,6 +43,7 @@ export function ProjectDetails() {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
 
   const projectId = params.id as string;
 
@@ -75,7 +78,7 @@ export function ProjectDetails() {
         return "bg-green-500";
       case "Pausado":
         return "bg-yellow-500";
-      case "Concluído":
+      case "Concluída":
         return "bg-blue-500";
       case "Cancelado":
         return "bg-red-500";
@@ -103,7 +106,7 @@ export function ProjectDetails() {
         return <Circle className="h-4 w-4 text-green-500" />;
       case "Pausado":
         return <Clock className="h-4 w-4 text-yellow-500" />;
-      case "Concluído":
+      case "Concluída":
         return <CheckCircle className="h-4 w-4 text-blue-500" />;
       case "Cancelado":
         return <AlertCircle className="h-4 w-4 text-red-500" />;
@@ -175,7 +178,7 @@ export function ProjectDetails() {
   }
 
   const tags = parseTags(project.tags);
-  const completedTasks = project.tasks.filter(t => t.status === "Concluído").length;
+  const completedTasks = project.tasks.filter(t => t.status === "Concluída").length;
   const totalTasks = project.tasks.length;
 
   return (
@@ -354,9 +357,12 @@ export function ProjectDetails() {
         <TabsContent value="tasks" className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Tarefas</h2>
-            <CreateTaskDialog projectId={project.id} onTaskCreated={handleTaskCreated} />
+            <div className="flex items-center gap-2">
+              <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+              <CreateTaskDialog projectId={project.id} onTaskCreated={handleTaskCreated} />
+            </div>
           </div>
-          
+
           {project.tasks.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center p-6">
@@ -369,11 +375,17 @@ export function ProjectDetails() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {project.tasks.map((task) => (
-                <TaskCard key={task.id} task={task} />
-              ))}
-            </div>
+            <>
+              {viewMode === "cards" ? (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {project.tasks.map((task) => (
+                    <TaskCard key={task.id} task={task} />
+                  ))}
+                </div>
+              ) : (
+                <TaskTable tasks={project.tasks} />
+              )}
+            </>
           )}
         </TabsContent>
 
@@ -494,21 +506,21 @@ export function ProjectDetails() {
                     .map((task, index) => (
                       <div key={task.id} className="relative flex items-start">
                         <div className={`absolute left-4 w-2 h-2 rounded-full transform -translate-x-1/2 ${
-                          task.status === "Concluído" ? "bg-green-500" :
+                          task.status === "Concluída" ? "bg-green-500" :
                           task.status === "Em Progresso" ? "bg-blue-500" :
                           task.status === "Bloqueado" ? "bg-red-500" : "bg-yellow-500"
                         }`}></div>
                         <div className="ml-8">
                           <div className="flex items-center gap-2 mb-1">
                             <Badge variant="outline" className={
-                              task.status === "Concluído" ? "border-green-500 text-green-700" :
+                              task.status === "Concluída" ? "border-green-500 text-green-700" :
                               task.status === "Em Progresso" ? "border-blue-500 text-blue-700" :
                               task.status === "Bloqueado" ? "border-red-500 text-red-700" : "border-yellow-500 text-yellow-700"
                             }>
                               Tarefa
                             </Badge>
                             <Badge variant={
-                              task.status === "Concluído" ? "default" :
+                              task.status === "Concluída" ? "default" :
                               task.status === "Em Progresso" ? "secondary" :
                               task.status === "Bloqueado" ? "destructive" : "outline"
                             }>
@@ -539,7 +551,7 @@ export function ProjectDetails() {
                               <div className="w-full bg-gray-200 rounded-full h-1.5">
                                 <div 
                                   className={`h-1.5 rounded-full ${
-                                    task.status === "Concluído" ? "bg-green-500" :
+                                    task.status === "Concluída" ? "bg-green-500" :
                                     task.status === "Em Progresso" ? "bg-blue-500" :
                                     task.status === "Bloqueado" ? "bg-red-500" : "bg-yellow-500"
                                   }`}

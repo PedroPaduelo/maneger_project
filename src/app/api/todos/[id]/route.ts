@@ -3,10 +3,11 @@ import { db } from "@/lib/db";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const todoId = parseInt(params.id);
+    const resolvedParams = await params;
+    const todoId = parseInt(resolvedParams.id);
 
     if (isNaN(todoId)) {
       return NextResponse.json(
@@ -38,10 +39,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const todoId = parseInt(params.id);
+    const resolvedParams = await params;
+    const todoId = parseInt(resolvedParams.id);
 
     if (isNaN(todoId)) {
       return NextResponse.json(

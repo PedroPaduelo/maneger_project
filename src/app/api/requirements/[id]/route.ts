@@ -5,11 +5,12 @@ import { db } from "@/lib/db";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+    const resolvedParams = await params;
+
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -19,7 +20,7 @@ export async function GET(
 
     const requirement = await db.requirement.findFirst({
       where: {
-        id: parseInt(params.id),
+        id: parseInt(resolvedParams.id),
         project: {
           userId: session.user.id
         }
@@ -58,11 +59,12 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+    const resolvedParams = await params;
+
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -71,11 +73,11 @@ export async function PUT(
     }
 
     const body = await request.json();
-    
+
     // Verify that the requirement belongs to the authenticated user
     const existingRequirement = await db.requirement.findFirst({
       where: {
-        id: parseInt(params.id),
+        id: parseInt(resolvedParams.id),
         project: {
           userId: session.user.id
         }
@@ -91,7 +93,7 @@ export async function PUT(
     
     const requirement = await db.requirement.update({
       where: {
-        id: parseInt(params.id)
+        id: parseInt(resolvedParams.id)
       },
       data: {
         title: body.title,
@@ -127,22 +129,23 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
-    
+    const resolvedParams = await params;
+
     if (!session?.user?.id) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
       );
     }
-    
+
     // Verify that the requirement belongs to the authenticated user
     const existingRequirement = await db.requirement.findFirst({
       where: {
-        id: parseInt(params.id),
+        id: parseInt(resolvedParams.id),
         project: {
           userId: session.user.id
         }
@@ -158,7 +161,7 @@ export async function DELETE(
     
     await db.requirement.delete({
       where: {
-        id: parseInt(params.id)
+        id: parseInt(resolvedParams.id)
       }
     });
 
