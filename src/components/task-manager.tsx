@@ -7,9 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Task, TaskTodo } from "@/lib/types";
 import {
   ArrowLeft,
@@ -19,10 +17,7 @@ import {
   AlertCircle,
   Circle,
   Plus,
-  Edit,
   Trash2,
-  Save,
-  X,
   GripVertical,
   MessageSquare,
   Target
@@ -31,6 +26,7 @@ import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import { EditTaskDialog } from "@/components/edit-task-dialog";
 
 export function TaskManager() {
   const params = useParams();
@@ -39,15 +35,6 @@ export function TaskManager() {
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState({
-    title: "",
-    description: "",
-    guidancePrompt: "",
-    additionalInformation: "",
-    status: "",
-    result: ""
-  });
   const [newTodo, setNewTodo] = useState("");
   const [isAddingTodo, setIsAddingTodo] = useState(false);
 
@@ -70,20 +57,17 @@ export function TaskManager() {
 
       const taskData = await response.json();
       setTask(taskData);
-      setEditForm({
-        title: taskData.title,
-        description: taskData.description || "",
-        guidancePrompt: taskData.guidancePrompt,
-        additionalInformation: taskData.additionalInformation || "",
-        status: taskData.status,
-        result: taskData.result || ""
-      });
     } catch (err) {
       console.error("Error fetching task:", err);
       setError("Erro ao carregar a tarefa. Por favor, tente novamente.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleTaskUpdated = () => {
+    // Refresh the task data
+    fetchTask();
   };
 
   const getStatusColor = (status: string) => {
@@ -116,42 +100,7 @@ export function TaskManager() {
     }
   };
 
-  const handleSaveTask = async () => {
-    if (!task) return;
-
-    try {
-      const response = await fetch(`/api/tasks/${task.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...editForm,
-          updatedBy: "system"
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update task");
-      }
-
-      const updatedTask = await response.json();
-      setTask(updatedTask);
-      setIsEditing(false);
-      toast({
-        title: "Sucesso",
-        description: "Tarefa atualizada com sucesso.",
-      });
-    } catch (error) {
-      console.error("Error updating task:", error);
-      toast({
-        title: "Erro",
-        description: "Falha ao atualizar a tarefa.",
-        variant: "destructive",
-      });
-    }
-  };
-
+  
   const handleAddTodo = async () => {
     if (!task || !newTodo.trim()) return;
 
@@ -303,23 +252,7 @@ export function TaskManager() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {isEditing ? (
-            <>
-              <Button variant="outline" onClick={() => setIsEditing(false)}>
-                <X className="h-4 w-4 mr-2" />
-                Cancelar
-              </Button>
-              <Button onClick={handleSaveTask}>
-                <Save className="h-4 w-4 mr-2" />
-                Salvar
-              </Button>
-            </>
-          ) : (
-            <Button onClick={() => setIsEditing(true)}>
-              <Edit className="h-4 w-4 mr-2" />
-              Editar
-            </Button>
-          )}
+          {task && <EditTaskDialog task={task} onTaskUpdated={handleTaskUpdated} />}
         </div>
       </div>
 
@@ -342,117 +275,52 @@ export function TaskManager() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {isEditing ? (
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium">Título</label>
-                    <Input
-                      value={editForm.title}
-                      onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Status</label>
-                    <Select value={editForm.status} onValueChange={(value) => setEditForm(prev => ({ ...prev, status: value }))}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Pendente">Pendente</SelectItem>
-                        <SelectItem value="Em Progresso">Em Progresso</SelectItem>
-                        <SelectItem value="Concluída">Concluída</SelectItem>
-                        <SelectItem value="Bloqueado">Bloqueado</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Descrição</label>
-                    <Textarea
-                      value={editForm.description}
-                      onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
-                      className="mt-1"
-                      rows={3}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Guidance Prompt</label>
-                    <Textarea
-                      value={editForm.guidancePrompt}
-                      onChange={(e) => setEditForm(prev => ({ ...prev, guidancePrompt: e.target.value }))}
-                      className="mt-1"
-                      rows={3}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Informações Adicionais</label>
-                    <Textarea
-                      value={editForm.additionalInformation}
-                      onChange={(e) => setEditForm(prev => ({ ...prev, additionalInformation: e.target.value }))}
-                      className="mt-1"
-                      rows={3}
-                    />
-                  </div>
-                  {task.status === "Concluída" && (
-                    <div>
-                      <label className="text-sm font-medium">Resultado</label>
-                      <Textarea
-                        value={editForm.result}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, result: e.target.value }))}
-                        className="mt-1"
-                        rows={3}
-                      />
-                    </div>
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold mb-2">{task.title}</h3>
+                  {task.description && (
+                    <p className="text-muted-foreground">{task.description}</p>
                   )}
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold mb-2">{task.title}</h3>
-                    {task.description && (
-                      <p className="text-muted-foreground">{task.description}</p>
-                    )}
+
+                {task.guidancePrompt && (
+                  <div className="border rounded-lg p-4 bg-muted/30">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="h-2 w-2 bg-primary rounded-full"></div>
+                      <h4 className="font-medium text-sm">Guidance Prompt</h4>
+                      <span className="text-xs text-muted-foreground ml-auto">AI Instructions</span>
+                    </div>
+                    <div className="prose prose-sm max-w-none dark:prose-invert">
+                      <MarkdownRenderer content={task.guidancePrompt} />
+                    </div>
                   </div>
-                  
-                  {task.guidancePrompt && (
-                    <div className="border rounded-lg p-4 bg-muted/30">
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="h-2 w-2 bg-primary rounded-full"></div>
-                        <h4 className="font-medium text-sm">Guidance Prompt</h4>
-                        <span className="text-xs text-muted-foreground ml-auto">AI Instructions</span>
-                      </div>
-                      <div className="prose prose-sm max-w-none dark:prose-invert">
-                        <MarkdownRenderer content={task.guidancePrompt} />
-                      </div>
-                    </div>
-                  )}
+                )}
 
-                  {task.additionalInformation && (
-                    <div>
-                      <h4 className="font-medium mb-2">Informações Adicionais</h4>
-                      <p className="text-sm text-muted-foreground">{task.additionalInformation}</p>
-                    </div>
-                  )}
+                {task.additionalInformation && (
+                  <div>
+                    <h4 className="font-medium mb-2">Informações Adicionais</h4>
+                    <p className="text-sm text-muted-foreground">{task.additionalInformation}</p>
+                  </div>
+                )}
 
-                  {task.result && (
-                    <div>
-                      <h4 className="font-medium mb-2">Resultado</h4>
-                      <p className="text-sm text-muted-foreground">{task.result}</p>
-                    </div>
-                  )}
+                {task.result && (
+                  <div>
+                    <h4 className="font-medium mb-2">Resultado</h4>
+                    <p className="text-sm text-muted-foreground">{task.result}</p>
+                  </div>
+                )}
 
-                  <div className="flex items-center gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span>Criado: {format(new Date(task.createdAt), "dd/MM/yyyy", { locale: ptBR })}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span>Atualizado: {format(new Date(task.updatedAt), "dd/MM/yyyy", { locale: ptBR })}</span>
-                    </div>
+                <div className="flex items-center gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span>Criado: {format(new Date(task.createdAt), "dd/MM/yyyy", { locale: ptBR })}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span>Atualizado: {format(new Date(task.updatedAt), "dd/MM/yyyy", { locale: ptBR })}</span>
                   </div>
                 </div>
-              )}
+              </div>
             </CardContent>
           </Card>
 
