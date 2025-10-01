@@ -33,7 +33,7 @@ export function DashboardCharts({ projects, tasks, requirements }: DashboardChar
 
   // Calculate task status distribution
   const taskStatusDistribution = {
-    Concluído: tasks.filter(t => t.status === "Concluído").length,
+    "Concluída": tasks.filter(t => t.status === "Concluída").length,
     "Em Progresso": tasks.filter(t => t.status === "Em Progresso").length,
     Pendente: tasks.filter(t => t.status === "Pendente").length,
     Bloqueado: tasks.filter(t => t.status === "Bloqueado").length,
@@ -51,7 +51,7 @@ export function DashboardCharts({ projects, tasks, requirements }: DashboardChar
   const averageProgress = projects.length > 0 ? Math.round(totalProjectsProgress / projects.length) : 0;
 
   // Calculate completion rates
-  const taskCompletionRate = tasks.length > 0 ? Math.round((taskStatusDistribution.Concluído / tasks.length) * 100) : 0;
+  const taskCompletionRate = tasks.length > 0 ? Math.round((taskStatusDistribution["Concluída"] / tasks.length) * 100) : 0;
   const projectCompletionRate = projects.length > 0 ? Math.round((projectStatusDistribution.Concluído / projects.length) * 100) : 0;
 
   // Get recent activities (last 7 days)
@@ -184,7 +184,7 @@ export function DashboardCharts({ projects, tasks, requirements }: DashboardChar
               <div key={status} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className={`w-3 h-3 rounded-full ${
-                    status === "Concluído" ? "bg-green-500" :
+                    status === "Concluída" ? "bg-green-500" :
                     status === "Em Progresso" ? "bg-blue-500" :
                     status === "Pendente" ? "bg-yellow-500" : "bg-red-500"
                   }`} />
@@ -193,9 +193,9 @@ export function DashboardCharts({ projects, tasks, requirements }: DashboardChar
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">{count}</span>
                   <div className="w-16 bg-gray-200 rounded-full h-2">
-                    <div 
+                    <div
                       className={`h-2 rounded-full ${
-                        status === "Concluído" ? "bg-green-500" :
+                        status === "Concluída" ? "bg-green-500" :
                         status === "Em Progresso" ? "bg-blue-500" :
                         status === "Pendente" ? "bg-yellow-500" : "bg-red-500"
                       }`}
@@ -308,7 +308,7 @@ export function DashboardCharts({ projects, tasks, requirements }: DashboardChar
                 <CheckCircle className="h-4 w-4 text-green-500" />
                 <span className="text-sm">Tarefas Concluídas</span>
               </div>
-              <Badge variant="outline">{taskStatusDistribution.Concluído}</Badge>
+              <Badge variant="outline">{taskStatusDistribution["Concluída"]}</Badge>
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">

@@ -2,16 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { Server } from "socket.io";
-
-// Get Socket.IO server instance
-let io: Server | null = null;
-
-// This is a workaround to get the Socket.IO instance
-// In a real app, you would properly inject this
-if (typeof global !== 'undefined') {
-  io = (global as any).io;
-}
 
 export async function GET(
   request: NextRequest,
@@ -125,15 +115,6 @@ export async function PUT(
       }
     });
 
-    // Emit WebSocket event for real-time update
-    if (io) {
-      io.emit('requirement-update', {
-        type: 'requirement-updated',
-        requirement,
-        message: `Requisito "${requirement.title}" foi atualizado`
-      });
-    }
-
     return NextResponse.json(requirement);
   } catch (error) {
     console.error("Error updating requirement:", error);
@@ -180,15 +161,6 @@ export async function DELETE(
         id: parseInt(params.id)
       }
     });
-
-    // Emit WebSocket event for real-time update
-    if (io) {
-      io.emit('requirement-update', {
-        type: 'requirement-deleted',
-        requirementId: parseInt(params.id),
-        message: `Requisito "${existingRequirement.title}" foi excluído`
-      });
-    }
 
     return NextResponse.json({ message: "Requirement deleted successfully" });
   } catch (error) {

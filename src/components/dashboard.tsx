@@ -14,10 +14,10 @@ import { NotificationDropdown } from "@/components/notification-dropdown";
 import { CreateProjectDialog } from "@/components/create-project-dialog";
 import { AuthNav } from "@/components/auth-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { RealTimeUpdater } from "@/components/real-time-updater";
 import { DashboardCharts } from "@/components/dashboard-charts";
 import { RecentActivities } from "@/components/recent-activities";
 import { PerformanceMetrics } from "@/components/performance-metrics";
+import { AutoRefreshHeader } from "@/components/auto-refresh-header";
 import { Plus, Search, Filter, Star, Clock, CheckCircle, AlertTriangle, LayoutDashboard, BarChart3, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "next-auth/react";
@@ -42,16 +42,12 @@ export function Dashboard({ projects, tasks, requirements, historySummaries }: D
     window.location.reload();
   };
 
-  const handleDataUpdate = (data: any) => {
-    // Refresh data when real-time updates are received
-    console.log("Real-time update received:", data);
-    // In a real application, you might want to update specific parts of the UI
-    // For now, we'll just reload the page for simplicity
-    if (data.type && data.type.includes('created') || data.type.includes('deleted')) {
-      window.location.reload();
-    }
+  const handleAutoRefresh = () => {
+    // Refresh the page to get latest data
+    window.location.reload();
   };
 
+  
   // Calculate statistics
   const totalProjects = projects.length;
   const activeProjects = projects.filter(p => p.status === "Ativo").length;
@@ -93,8 +89,6 @@ export function Dashboard({ projects, tasks, requirements, historySummaries }: D
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <RealTimeUpdater onDataUpdate={handleDataUpdate} />
-      
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -105,6 +99,9 @@ export function Dashboard({ projects, tasks, requirements, historySummaries }: D
         </div>
         <div className="flex items-center gap-4">
           <NotificationDropdown />
+          <AutoRefreshHeader
+            onRefresh={handleAutoRefresh}
+          />
           <ThemeToggle />
           <CreateProjectDialog onProjectCreated={handleProjectCreated} />
           <AuthNav />
@@ -192,14 +189,14 @@ export function Dashboard({ projects, tasks, requirements, historySummaries }: D
           {/* Charts and Activities */}
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2">
-              <DashboardCharts 
+              <DashboardCharts
                 projects={projects}
                 tasks={tasks}
                 requirements={requirements}
               />
             </div>
             <div>
-              <RecentActivities 
+              <RecentActivities
                 projects={projects}
                 tasks={tasks}
                 requirements={requirements}

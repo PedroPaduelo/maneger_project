@@ -2,16 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { Server } from "socket.io";
-
-// Get Socket.IO server instance
-let io: Server | null = null;
-
-// This is a workaround to get the Socket.IO instance
-// In a real app, you would properly inject this
-if (typeof global !== 'undefined') {
-  io = (global as any).io;
-}
 
 export async function GET(request: NextRequest) {
   try {
@@ -135,15 +125,6 @@ export async function POST(request: NextRequest) {
         }
       }
     });
-
-    // Emit WebSocket event for real-time update
-    if (io) {
-      io.emit('requirement-update', {
-        type: 'requirement-created',
-        requirement,
-        message: `Novo requisito "${requirement.title}" foi criado`
-      });
-    }
 
     return NextResponse.json(requirement, { status: 201 });
   } catch (error) {

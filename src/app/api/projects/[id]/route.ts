@@ -2,16 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { Server } from "socket.io";
-
-// Get Socket.IO server instance
-let io: Server | null = null;
-
-// This is a workaround to get the Socket.IO instance
-// In a real app, you would properly inject this
-if (typeof global !== 'undefined') {
-  io = (global as any).io;
-}
 
 export async function GET(
   request: NextRequest,
@@ -154,15 +144,6 @@ export async function PUT(
       }
     });
 
-    // Emit WebSocket event for real-time update
-    if (io) {
-      io.emit('project-update', {
-        type: 'project-updated',
-        project,
-        message: `Projeto "${project.name}" foi atualizado`
-      });
-    }
-
     return NextResponse.json(project);
   } catch (error) {
     console.error("Error updating project:", error);
@@ -207,15 +188,6 @@ export async function DELETE(
         id: parseInt(params.id)
       }
     });
-
-    // Emit WebSocket event for real-time update
-    if (io) {
-      io.emit('project-update', {
-        type: 'project-deleted',
-        projectId: parseInt(params.id),
-        message: `Projeto "${existingProject.name}" foi excluído`
-      });
-    }
 
     return NextResponse.json({ message: "Project deleted successfully" });
   } catch (error) {

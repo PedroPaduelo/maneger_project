@@ -11,12 +11,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Task, TaskTodo } from "@/lib/types";
-import { 
-  ArrowLeft, 
-  Calendar, 
-  Clock, 
-  CheckCircle, 
-  AlertCircle, 
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  CheckCircle,
+  AlertCircle,
   Circle,
   Plus,
   Edit,
@@ -27,6 +27,7 @@ import {
   MessageSquare,
   Target
 } from "lucide-react";
+import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -413,10 +414,18 @@ export function TaskManager() {
                     )}
                   </div>
                   
-                  <div>
-                    <h4 className="font-medium mb-2">Guidance Prompt</h4>
-                    <p className="text-sm text-muted-foreground">{task.guidancePrompt}</p>
-                  </div>
+                  {task.guidancePrompt && (
+                    <div className="border rounded-lg p-4 bg-muted/30">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="h-2 w-2 bg-primary rounded-full"></div>
+                        <h4 className="font-medium text-sm">Guidance Prompt</h4>
+                        <span className="text-xs text-muted-foreground ml-auto">AI Instructions</span>
+                      </div>
+                      <div className="prose prose-sm max-w-none dark:prose-invert">
+                        <MarkdownRenderer content={task.guidancePrompt} />
+                      </div>
+                    </div>
+                  )}
 
                   {task.additionalInformation && (
                     <div>

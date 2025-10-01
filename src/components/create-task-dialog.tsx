@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { MarkdownEditor } from "@/components/markdown-editor";
 
 interface CreateTaskDialogProps {
   projectId: number;
@@ -130,13 +131,27 @@ export function CreateTaskDialog({ projectId, onTaskCreated }: CreateTaskDialogP
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="guidancePrompt">Guidance Prompt</Label>
-            <Textarea
-              id="guidancePrompt"
+            <MarkdownEditor
               value={formData.guidancePrompt}
-              onChange={(e) => setFormData(prev => ({ ...prev, guidancePrompt: e.target.value }))}
-              placeholder="Instruções ou prompt para guiar a execução da tarefa..."
-              rows={3}
+              onChange={(value) => setFormData(prev => ({ ...prev, guidancePrompt: value }))}
+              label="Guidance Prompt"
+              description="Instruções detalhadas em markdown para a IA executar a tarefa. Use títulos, listas, código, etc."
+              placeholder="Ex:
+# Tarefa: Implementar Autenticação
+
+## Objetivo
+Criar sistema de login JWT
+
+## Requisitos
+- [ ] Criar endpoint /auth/login
+- [ ] Implementar middleware de autenticação
+- [ ] Testar tokens JWT
+
+## Código de Referência
+```typescript
+// Exemplo de implementação
+```
+"
             />
           </div>
 

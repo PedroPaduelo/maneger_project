@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Task } from "@/lib/types";
 import { Edit, Save, X, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { MarkdownEditor } from "@/components/markdown-editor";
 
 interface EditTaskDialogProps {
   task: Task;
@@ -139,14 +140,12 @@ export function EditTaskDialog({ task, onTaskUpdated }: EditTaskDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="guidancePrompt">Prompt de Orientação</Label>
-            <Textarea
-              id="guidancePrompt"
+            <MarkdownEditor
               value={formData.guidancePrompt}
-              onChange={(e) => setFormData({ ...formData, guidancePrompt: e.target.value })}
-              placeholder="Instruções ou orientações para a tarefa"
-              rows={2}
-              required
+              onChange={(value) => setFormData({ ...formData, guidancePrompt: value })}
+              label="Guidance Prompt"
+              description="Instruções detalhadas em markdown para a IA executar a tarefa"
+              placeholder="Estruture seu prompt com markdown para melhores resultados..."
             />
           </div>
 

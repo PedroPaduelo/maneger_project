@@ -5,15 +5,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Task } from "@/lib/types";
-import { 
-  Calendar, 
-  Clock, 
-  CheckCircle, 
-  AlertCircle, 
+import {
+  Calendar,
+  Clock,
+  CheckCircle,
+  AlertCircle,
   Circle,
   User,
   MessageSquare
 } from "lucide-react";
+import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useRouter } from "next/navigation";
@@ -83,9 +84,26 @@ export function TaskCard({ task }: TaskCardProps) {
             <CardTitle className="text-lg font-semibold line-clamp-2">
               {task.title}
             </CardTitle>
-            <CardDescription className="line-clamp-2 mt-1">
-              {task.description || task.guidancePrompt}
-            </CardDescription>
+            <CardDescription className="line-clamp-3 mt-1">
+            {task.description || (task.guidancePrompt && (
+              <span className="text-sm">
+                {task.guidancePrompt
+                  .replace(/^#+\s/gm, '') // Remove headers
+                  .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold formatting but keep text
+                  .replace(/\*(.*?)\*/g, '$1') // Remove italic formatting but keep text
+                  .replace(/`(.*?)`/g, '$1') // Remove inline code formatting but keep text
+                  .replace(/^- \[ \] /gm, '▢ ') // Convert checkboxes
+                  .replace(/^- \[x\] /gm, '☑ ') // Convert checked boxes
+                  .replace(/^[-*+]\s/gm, '• ') // Convert list items
+                  .replace(/^\d+\.\s/gm, '• ') // Convert numbered lists
+                  .split('\n')
+                  .filter(line => line.trim())
+                  .slice(0, 3)
+                  .join(' • ')
+                }
+              </span>
+            ))}
+          </CardDescription>
           </div>
           <div className="flex items-center gap-2 ml-2">
             <EditTaskDialog task={task} onTaskUpdated={handleTaskUpdated} />
