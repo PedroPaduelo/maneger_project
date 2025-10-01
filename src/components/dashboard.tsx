@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Project, Task, Requirement, HistorySummary } from "@/lib/types";
 import { ProjectCard } from "@/components/project-card";
+import { ProjectTable } from "@/components/project-table";
 import { NotificationDropdown } from "@/components/notification-dropdown";
 import { CreateProjectDialog } from "@/components/create-project-dialog";
 import { AuthNav } from "@/components/auth-nav";
@@ -18,7 +19,7 @@ import { DashboardCharts } from "@/components/dashboard-charts";
 import { RecentActivities } from "@/components/recent-activities";
 import { PerformanceMetrics } from "@/components/performance-metrics";
 import { AutoRefreshHeader } from "@/components/auto-refresh-header";
-import { Plus, Search, Filter, Star, Clock, CheckCircle, AlertTriangle, LayoutDashboard, BarChart3, TrendingUp } from "lucide-react";
+import { Plus, Search, Filter, Star, Clock, CheckCircle, AlertTriangle, LayoutDashboard, BarChart3, TrendingUp, LayoutGrid, Table as TableIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "next-auth/react";
 
@@ -35,6 +36,7 @@ export function Dashboard({ projects, tasks, requirements, historySummaries }: D
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
+  const [viewMode, setViewMode] = useState<"card" | "table">("card");
   const { toast } = useToast();
 
   const handleProjectCreated = () => {
@@ -226,82 +228,112 @@ export function Dashboard({ projects, tasks, requirements, historySummaries }: D
 
         {/* Projects Tab */}
         <TabsContent value="projects" className="space-y-6">
-          {/* Filters and Search */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Filtros e Busca</CardTitle>
-              <CardDescription>
-                Encontre projetos rapidamente usando os filtros abaixo
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Buscar projetos..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os Status</SelectItem>
-                    <SelectItem value="Ativo">Ativo</SelectItem>
-                    <SelectItem value="Pausado">Pausado</SelectItem>
-                    <SelectItem value="Concluída">Concluída</SelectItem>
-                    <SelectItem value="Cancelado">Cancelado</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Prioridade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as Prioridades</SelectItem>
-                    <SelectItem value="Alta">Alta</SelectItem>
-                    <SelectItem value="Média">Média</SelectItem>
-                    <SelectItem value="Baixa">Baixa</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Projects List */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
+          {/* Header com Toggle de Visualização */}
+          <div className="flex items-center justify-between">
+            <div>
               <h2 className="text-xl font-semibold">Projetos</h2>
-              <Badge variant="secondary">{filteredProjects.length} projetos</Badge>
+              <p className="text-sm text-muted-foreground">
+                {filteredProjects.length} {filteredProjects.length === 1 ? 'projeto' : 'projetos'}
+              </p>
             </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant={viewMode === "card" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode("card")}
+              >
+                <LayoutGrid className="h-4 w-4 mr-2" />
+                Cards
+              </Button>
+              <Button
+                variant={viewMode === "table" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode("table")}
+              >
+                <TableIcon className="h-4 w-4 mr-2" />
+                Tabela
+              </Button>
+            </div>
+          </div>
 
-            {filteredProjects.length === 0 ? (
+          {/* Visualização condicional */}
+          {viewMode === "table" ? (
+            <ProjectTable projects={filteredProjects} />
+          ) : (
+            <>
+              {/* Filters and Search para Card View */}
               <Card>
-                <CardContent className="flex flex-col items-center justify-center p-6">
-                  <div className="text-center space-y-2">
-                    <h3 className="text-lg font-medium">Nenhum projeto encontrado</h3>
-                    <p className="text-muted-foreground">
-                      {searchTerm || statusFilter !== "all" || priorityFilter !== "all"
-                        ? "Tente ajustar seus filtros ou termos de busca."
-                        : "Comece criando seu primeiro projeto."}
-                    </p>
+                <CardHeader>
+                  <CardTitle>Filtros e Busca</CardTitle>
+                  <CardDescription>
+                    Encontre projetos rapidamente usando os filtros abaixo
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex-1">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Buscar projetos..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos os Status</SelectItem>
+                        <SelectItem value="Ativo">Ativo</SelectItem>
+                        <SelectItem value="Pausado">Pausado</SelectItem>
+                        <SelectItem value="Concluída">Concluída</SelectItem>
+                        <SelectItem value="Cancelado">Cancelado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Prioridade" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas as Prioridades</SelectItem>
+                        <SelectItem value="Alta">Alta</SelectItem>
+                        <SelectItem value="Média">Média</SelectItem>
+                        <SelectItem value="Baixa">Baixa</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </CardContent>
               </Card>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {filteredProjects.map((project) => (
-                  <ProjectCard key={project.id} project={project} />
-                ))}
+
+              {/* Projects List em Cards */}
+              <div className="space-y-4">
+                {filteredProjects.length === 0 ? (
+                  <Card>
+                    <CardContent className="flex flex-col items-center justify-center p-6">
+                      <div className="text-center space-y-2">
+                        <h3 className="text-lg font-medium">Nenhum projeto encontrado</h3>
+                        <p className="text-muted-foreground">
+                          {searchTerm || statusFilter !== "all" || priorityFilter !== "all"
+                            ? "Tente ajustar seus filtros ou termos de busca."
+                            : "Comece criando seu primeiro projeto."}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {filteredProjects.map((project) => (
+                      <ProjectCard key={project.id} project={project} />
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </>
+          )}
         </TabsContent>
       </Tabs>
     </div>

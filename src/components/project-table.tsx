@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Task } from "@/lib/types";
+import { Project } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -19,17 +19,16 @@ import {
   CheckCircle,
   AlertCircle,
   Circle,
-  User,
-  MessageSquare,
-  Edit,
+  Star,
+  GitBranch,
   ArrowUpDown,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useRouter } from "next/navigation";
-import { EditTaskDialog } from "@/components/edit-task-dialog";
-import { DeleteTaskDialog } from "@/components/delete-task-dialog";
-import { TaskFilters } from "@/components/task-filters";
+import { EditProjectDialog } from "@/components/edit-project-dialog";
+import { DeleteProjectDialog } from "@/components/delete-project-dialog";
+import { ProjectFilters } from "@/components/project-filters";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -42,12 +41,11 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
-interface TaskTableProps {
-  tasks: Task[];
-  availableCreators: string[];
+interface ProjectTableProps {
+  projects: Project[];
 }
 
-export function TaskTable({ tasks, availableCreators }: TaskTableProps) {
+export function ProjectTable({ projects }: ProjectTableProps) {
   const router = useRouter();
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -55,41 +53,41 @@ export function TaskTable({ tasks, availableCreators }: TaskTableProps) {
 
   const [searchTerm, setSearchTerm] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string[]>([]);
-  const [hasTodosFilter, setHasTodosFilter] = React.useState("all");
-  const [createdByFilter, setCreatedByFilter] = React.useState("all");
+  const [priorityFilter, setPriorityFilter] = React.useState<string[]>([]);
+  const [isFavoriteFilter, setIsFavoriteFilter] = React.useState("all");
 
   // Apply filters to the data
   const filteredData = React.useMemo(() => {
-    let filtered = tasks;
+    let filtered = projects;
 
     // Global search
     if (globalFilter) {
-      filtered = filtered.filter((task) =>
-        task.title.toLowerCase().includes(globalFilter.toLowerCase()) ||
-        task.description?.toLowerCase().includes(globalFilter.toLowerCase()) ||
-        task.additionalInformation?.toLowerCase().includes(globalFilter.toLowerCase())
+      filtered = filtered.filter((project) =>
+        project.name.toLowerCase().includes(globalFilter.toLowerCase()) ||
+        project.description?.toLowerCase().includes(globalFilter.toLowerCase()) ||
+        project.stack?.toLowerCase().includes(globalFilter.toLowerCase())
       );
     }
 
     // Status filter
     if (statusFilter.length > 0) {
-      filtered = filtered.filter((task) => statusFilter.includes(task.status));
+      filtered = filtered.filter((project) => statusFilter.includes(project.status));
     }
 
-    // Has todos filter
-    if (hasTodosFilter === "with-todos") {
-      filtered = filtered.filter((task) => task.taskTodos.length > 0);
-    } else if (hasTodosFilter === "without-todos") {
-      filtered = filtered.filter((task) => task.taskTodos.length === 0);
+    // Priority filter
+    if (priorityFilter.length > 0) {
+      filtered = filtered.filter((project) => priorityFilter.includes(project.priority));
     }
 
-    // Created by filter
-    if (createdByFilter !== "all") {
-      filtered = filtered.filter((task) => task.createdBy === createdByFilter);
+    // Is favorite filter
+    if (isFavoriteFilter === "favorites") {
+      filtered = filtered.filter((project) => project.isFavorite);
+    } else if (isFavoriteFilter === "non-favorites") {
+      filtered = filtered.filter((project) => !project.isFavorite);
     }
 
     return filtered;
-  }, [tasks, globalFilter, statusFilter, hasTodosFilter, createdByFilter]);
+  }, [projects, globalFilter, statusFilter, priorityFilter, isFavoriteFilter]);
 
   // Update global filter when search term changes
   React.useEffect(() => {
@@ -108,37 +106,67 @@ export function TaskTable({ tasks, availableCreators }: TaskTableProps) {
     });
   }, [statusFilter]);
 
-  const handleTaskUpdated = () => {
+  const handleProjectUpdated = () => {
     window.location.reload();
   };
 
-  const handleTaskDeleted = () => {
+  const handleProjectDeleted = () => {
     window.location.reload();
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
+      case "Ativo":
+        return <Circle className="h-4 w-4 text-green-500" />;
+      case "Pausado":
+        return <Clock className="h-4 w-4 text-yellow-500" />;
       case "Concluída":
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case "Em Progresso":
-        return <Clock className="h-4 w-4 text-blue-500" />;
-      case "Pendente":
-        return <Circle className="h-4 w-4 text-yellow-500" />;
-      case "Bloqueado":
+        return <CheckCircle className="h-4 w-4 text-blue-500" />;
+      case "Cancelado":
         return <AlertCircle className="h-4 w-4 text-red-500" />;
       default:
         return <Circle className="h-4 w-4 text-gray-500" />;
     }
   };
 
-  const calculateProgress = (task: Task) => {
-    if (task.taskTodos.length === 0) return 0;
-    const completed = task.taskTodos.filter(todo => todo.isCompleted).length;
-    return Math.round((completed / task.taskTodos.length) * 100);
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "Alta":
+        return "destructive";
+      case "Média":
+        return "default";
+      case "Baixa":
+        return "secondary";
+      default:
+        return "outline";
+    }
   };
 
-  const handleViewDetails = (taskId: string) => {
-    router.push(`/task/${taskId}`);
+  const handleViewDetails = (projectId: string) => {
+    router.push(`/project/${projectId}`);
+  };
+
+  const handleToggleFavorite = async (project: Project) => {
+    try {
+      const response = await fetch(`/api/projects/${project.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...project,
+          isFavorite: !project.isFavorite
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update project");
+      }
+
+      window.location.reload();
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+    }
   };
 
   const truncateText = (text: string, maxLength: number) => {
@@ -146,60 +174,43 @@ export function TaskTable({ tasks, availableCreators }: TaskTableProps) {
     return text.substring(0, maxLength) + "...";
   };
 
-  const formatDescription = (task: Task) => {
-    if (task.description) {
-      return truncateText(task.description, 100);
+  const parseTags = (tags: string | null) => {
+    if (!tags) return [];
+    try {
+      return JSON.parse(tags);
+    } catch {
+      return tags.split(',').map(tag => tag.trim());
     }
-    if (task.guidancePrompt) {
-      return truncateText(
-        task.guidancePrompt
-          .replace(/^#+\s/gm, '')
-          .replace(/\*\*(.*?)\*\*/g, '$1')
-          .replace(/\*(.*?)\*/g, '$1')
-          .replace(/`(.*?)`/g, '$1')
-          .replace(/^- \[ \] /gm, '▢ ')
-          .replace(/^- \[x\] /gm, '☑ ')
-          .replace(/^[-*+]\s/gm, '• ')
-          .replace(/^\d+\.\s/gm, '• ')
-          .split('\n')
-          .filter(line => line.trim())
-          .slice(0, 2)
-          .join(' • '),
-        100
-      );
-    }
-    return "Sem descrição";
   };
 
-  const columns: ColumnDef<Task>[] = [
+  const columns: ColumnDef<Project>[] = [
     {
-      accessorKey: "title",
+      accessorKey: "name",
       header: ({ column }) => (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="h-auto p-0 font-semibold"
         >
-          Tarefa
+          Projeto
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
       cell: ({ row }) => {
-        const task = row.original;
+        const project = row.original;
         return (
           <div className="max-w-xs">
-            <div className="font-medium line-clamp-2">
-              {task.title}
+            <div className="flex items-center gap-2">
+              {project.isFavorite && (
+                <Star className="h-4 w-4 text-yellow-500 fill-current" />
+              )}
+              <div className="font-medium line-clamp-2">
+                {project.name}
+              </div>
             </div>
-            <div className="text-sm text-muted-foreground line-clamp-2">
-              {formatDescription(task)}
-            </div>
-            {task.additionalInformation && (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                <MessageSquare className="h-3 w-3" />
-                <span className="line-clamp-1">
-                  {truncateText(task.additionalInformation, 50)}
-                </span>
+            {project.description && (
+              <div className="text-sm text-muted-foreground line-clamp-2">
+                {truncateText(project.description, 100)}
               </div>
             )}
           </div>
@@ -219,14 +230,35 @@ export function TaskTable({ tasks, availableCreators }: TaskTableProps) {
         </Button>
       ),
       cell: ({ row }) => {
-        const task = row.original;
+        const project = row.original;
         return (
           <div className="flex items-center gap-2">
-            {getStatusIcon(task.status)}
+            {getStatusIcon(project.status)}
             <Badge variant="outline" className="text-xs">
-              {task.status}
+              {project.status}
             </Badge>
           </div>
+        );
+      },
+    },
+    {
+      accessorKey: "priority",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="h-auto p-0 font-semibold"
+        >
+          Prioridade
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const project = row.original;
+        return (
+          <Badge variant={getPriorityColor(project.priority)} className="text-xs">
+            {project.priority}
+          </Badge>
         );
       },
     },
@@ -234,23 +266,42 @@ export function TaskTable({ tasks, availableCreators }: TaskTableProps) {
       accessorKey: "progress",
       header: "Progresso",
       cell: ({ row }) => {
-        const task = row.original;
-        const progress = calculateProgress(task);
-
-        if (task.taskTodos.length === 0) {
-          return <span className="text-xs text-muted-foreground">Sem itens</span>;
-        }
+        const project = row.original;
 
         return (
           <div className="min-w-[120px]">
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">
-                  {task.taskTodos.filter(t => t.isCompleted).length}/{task.taskTodos.length}
-                </span>
-                <span className="font-medium">{progress}%</span>
+                <span className="font-medium">{project.progress}%</span>
               </div>
-              <Progress value={progress} className="h-1.5" />
+              <Progress value={project.progress} className="h-1.5" />
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "stack",
+      header: "Tecnologias",
+      cell: ({ row }) => {
+        const project = row.original;
+        if (!project.stack) return <span className="text-xs text-muted-foreground">-</span>;
+
+        const techs = project.stack.split(',');
+        return (
+          <div className="flex items-center gap-1 min-w-[150px]">
+            <GitBranch className="h-3 w-3 text-muted-foreground" />
+            <div className="flex flex-wrap gap-1">
+              {techs.slice(0, 2).map((tech, index) => (
+                <Badge key={index} variant="secondary" className="text-xs">
+                  {tech.trim()}
+                </Badge>
+              ))}
+              {techs.length > 2 && (
+                <Badge variant="secondary" className="text-xs">
+                  +{techs.length - 2}
+                </Badge>
+              )}
             </div>
           </div>
         );
@@ -269,26 +320,13 @@ export function TaskTable({ tasks, availableCreators }: TaskTableProps) {
         </Button>
       ),
       cell: ({ row }) => {
-        const task = row.original;
+        const project = row.original;
         return (
           <div className="flex items-center gap-1 text-sm min-w-[100px]">
             <Calendar className="h-3 w-3 text-muted-foreground" />
             <span>
-              {format(new Date(task.createdAt), "dd/MM/yyyy", { locale: ptBR })}
+              {format(new Date(project.createdAt), "dd/MM/yyyy", { locale: ptBR })}
             </span>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "createdBy",
-      header: "Criado por",
-      cell: ({ row }) => {
-        const task = row.original;
-        return (
-          <div className="flex items-center gap-1 text-sm min-w-[100px]">
-            <User className="h-3 w-3 text-muted-foreground" />
-            <span>{task.createdBy}</span>
           </div>
         );
       },
@@ -297,15 +335,23 @@ export function TaskTable({ tasks, availableCreators }: TaskTableProps) {
       id: "actions",
       header: "Ações",
       cell: ({ row }) => {
-        const task = row.original;
+        const project = row.original;
         return (
-          <div className="flex items-center gap-2 min-w-[160px]">
-            <EditTaskDialog task={task} onTaskUpdated={handleTaskUpdated} />
-            <DeleteTaskDialog task={task} onTaskDeleted={handleTaskDeleted} />
+          <div className="flex items-center gap-2 min-w-[200px]">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleToggleFavorite(project)}
+              className="h-8 w-8 p-0"
+            >
+              <Star className={`h-4 w-4 ${project.isFavorite ? 'text-yellow-500 fill-current' : ''}`} />
+            </Button>
+            <EditProjectDialog project={project} onProjectUpdated={handleProjectUpdated} />
+            <DeleteProjectDialog project={project} onProjectDeleted={handleProjectDeleted} />
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleViewDetails(task.id)}
+              onClick={() => handleViewDetails(project.id)}
             >
               Ver Detalhes
             </Button>
@@ -340,25 +386,24 @@ export function TaskTable({ tasks, availableCreators }: TaskTableProps) {
   const resetFilters = () => {
     setSearchTerm("");
     setStatusFilter([]);
-    setHasTodosFilter("all");
-    setCreatedByFilter("all");
+    setPriorityFilter([]);
+    setIsFavoriteFilter("all");
     setColumnFilters([]);
   };
 
   return (
     <div className="space-y-4">
       {/* Filtros */}
-      <TaskFilters
+      <ProjectFilters
         searchTerm={searchTerm}
         onSearchTermChange={setSearchTerm}
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
-        hasTodosFilter={hasTodosFilter}
-        onHasTodosFilterChange={setHasTodosFilter}
-        createdByFilter={createdByFilter}
-        onCreatedByFilterChange={setCreatedByFilter}
+        priorityFilter={priorityFilter}
+        onPriorityFilterChange={setPriorityFilter}
+        isFavoriteFilter={isFavoriteFilter}
+        onIsFavoriteFilterChange={setIsFavoriteFilter}
         resetFilters={resetFilters}
-        availableCreators={availableCreators}
       />
 
       <div className="rounded-md border">
@@ -390,7 +435,7 @@ export function TaskTable({ tasks, availableCreators }: TaskTableProps) {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  Nenhuma tarefa encontrada.
+                  Nenhum projeto encontrado.
                 </TableCell>
               </TableRow>
             )}
@@ -401,9 +446,9 @@ export function TaskTable({ tasks, availableCreators }: TaskTableProps) {
       {/* Controles de Paginação */}
       <div className="flex items-center justify-between px-2">
         <div className="flex-1 text-sm text-muted-foreground">
-          Mostrando {table.getRowModel().rows.length} de {filteredData.length} tarefas
-          {filteredData.length !== tasks.length && (
-            <span> (de {tasks.length} totais)</span>
+          Mostrando {table.getRowModel().rows.length} de {filteredData.length} projetos
+          {filteredData.length !== projects.length && (
+            <span> (de {projects.length} totais)</span>
           )}
         </div>
         <div className="flex items-center space-x-6 lg:space-x-8">

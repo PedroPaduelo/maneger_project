@@ -20,6 +20,7 @@ import { ptBR } from "date-fns/locale";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { EditTaskDialog } from "@/components/edit-task-dialog";
+import { DeleteTaskDialog } from "@/components/delete-task-dialog";
 
 interface TaskCardProps {
   task: Task;
@@ -30,6 +31,11 @@ export function TaskCard({ task }: TaskCardProps) {
   const { toast } = useToast();
 
   const handleTaskUpdated = () => {
+    // Refresh the page or update the local state
+    window.location.reload();
+  };
+
+  const handleTaskDeleted = () => {
     // Refresh the page or update the local state
     window.location.reload();
   };
@@ -107,6 +113,7 @@ export function TaskCard({ task }: TaskCardProps) {
           </div>
           <div className="flex items-center gap-2 ml-2">
             <EditTaskDialog task={task} onTaskUpdated={handleTaskUpdated} />
+            <DeleteTaskDialog task={task} onTaskDeleted={handleTaskDeleted} />
           </div>
         </div>
         
