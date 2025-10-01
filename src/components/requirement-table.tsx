@@ -1,10 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { Task } from "@/lib/types";
+import { Requirement } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import {
   Table,
   TableBody,
@@ -15,19 +14,18 @@ import {
 } from "@/components/ui/table";
 import {
   Calendar,
-  Clock,
+  AlertTriangle,
   CheckCircle,
-  AlertCircle,
-  Circle,
-  User,
-  MessageSquare,
-  Edit,
+  FileText,
+  Tag,
+  Target,
   ArrowUpDown,
+  Edit,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useRouter } from "next/navigation";
-import { EditTaskDialog } from "@/components/edit-task-dialog";
+import { EditRequirementDialog } from "@/components/edit-requirement-dialog";
 import {
   ColumnDef,
   SortingState,
@@ -38,41 +36,42 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
-interface TaskTableProps {
-  tasks: Task[];
+interface RequirementTableProps {
+  requirements: Requirement[];
 }
 
-export function TaskTable({ tasks }: TaskTableProps) {
+export function RequirementTable({ requirements }: RequirementTableProps) {
   const router = useRouter();
   const [sorting, setSorting] = React.useState<SortingState>([]);
 
-  const handleTaskUpdated = () => {
+  const handleRequirementUpdated = () => {
     window.location.reload();
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "Concluída":
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case "Em Progresso":
-        return <Clock className="h-4 w-4 text-blue-500" />;
-      case "Pendente":
-        return <Circle className="h-4 w-4 text-yellow-500" />;
-      case "Bloqueado":
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "Alta":
+        return "destructive";
+      case "Média":
+        return "default";
+      case "Baixa":
+        return "secondary";
       default:
-        return <Circle className="h-4 w-4 text-gray-500" />;
+        return "outline";
     }
   };
 
-  const calculateProgress = (task: Task) => {
-    if (task.taskTodos.length === 0) return 0;
-    const completed = task.taskTodos.filter(todo => todo.isCompleted).length;
-    return Math.round((completed / task.taskTodos.length) * 100);
-  };
-
-  const handleViewDetails = (taskId: string) => {
-    router.push(`/task/${taskId}`);
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case "Funcional":
+        return <Target className="h-4 w-4 text-blue-500" />;
+      case "Não Funcional":
+        return <AlertTriangle className="h-4 w-4 text-orange-500" />;
+      case "Regra de Negócio":
+        return <FileText className="h-4 w-4 text-purple-500" />;
+      default:
+        return <FileText className="h-4 w-4 text-gray-500" />;
+    }
   };
 
   const truncateText = (text: string, maxLength: number) => {
@@ -80,32 +79,11 @@ export function TaskTable({ tasks }: TaskTableProps) {
     return text.substring(0, maxLength) + "...";
   };
 
-  const formatDescription = (task: Task) => {
-    if (task.description) {
-      return truncateText(task.description, 100);
-    }
-    if (task.guidancePrompt) {
-      return truncateText(
-        task.guidancePrompt
-          .replace(/^#+\s/gm, '')
-          .replace(/\*\*(.*?)\*\*/g, '$1')
-          .replace(/\*(.*?)\*/g, '$1')
-          .replace(/`(.*?)`/g, '$1')
-          .replace(/^- \[ \] /gm, '▢ ')
-          .replace(/^- \[x\] /gm, '☑ ')
-          .replace(/^[-*+]\s/gm, '• ')
-          .replace(/^\d+\.\s/gm, '• ')
-          .split('\n')
-          .filter(line => line.trim())
-          .slice(0, 2)
-          .join(' • '),
-        100
-      );
-    }
-    return "Sem descrição";
+  const handleViewDetails = (requirementId: string) => {
+    router.push(`/requirement/${requirementId}`);
   };
 
-  const columns: ColumnDef<Task>[] = [
+  const columns: ColumnDef<Requirement>[] = [
     {
       accessorKey: "title",
       header: ({ column }) => (
@@ -114,26 +92,26 @@ export function TaskTable({ tasks }: TaskTableProps) {
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="h-auto p-0 font-semibold"
         >
-          Tarefa
+          Requisito
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
       cell: ({ row }) => {
-        const task = row.original;
+        const requirement = row.original;
         return (
           <div className="max-w-xs">
             <div className="font-medium line-clamp-2">
-              {task.title}
+              {requirement.title}
             </div>
-            <div className="text-sm text-muted-foreground line-clamp-2">
-              {formatDescription(task)}
-            </div>
-            {task.additionalInformation && (
+            {requirement.description && (
+              <div className="text-sm text-muted-foreground line-clamp-2">
+                {truncateText(requirement.description, 120)}
+              </div>
+            )}
+            {requirement.category && (
               <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                <MessageSquare className="h-3 w-3" />
-                <span className="line-clamp-1">
-                  {truncateText(task.additionalInformation, 50)}
-                </span>
+                <Tag className="h-3 w-3" />
+                <span className="line-clamp-1">{requirement.category}</span>
               </div>
             )}
           </div>
@@ -141,51 +119,56 @@ export function TaskTable({ tasks }: TaskTableProps) {
       },
     },
     {
-      accessorKey: "status",
+      accessorKey: "type",
       header: ({ column }) => (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
           className="h-auto p-0 font-semibold"
         >
-          Status
+          Tipo
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       ),
       cell: ({ row }) => {
-        const task = row.original;
+        const requirement = row.original;
         return (
           <div className="flex items-center gap-2">
-            {getStatusIcon(task.status)}
-            <Badge variant="outline" className="text-xs">
-              {task.status}
-            </Badge>
+            {getTypeIcon(requirement.type)}
+            <span className="text-sm">{requirement.type}</span>
           </div>
         );
       },
     },
     {
-      accessorKey: "progress",
-      header: "Progresso",
+      accessorKey: "priority",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="h-auto p-0 font-semibold"
+        >
+          Prioridade
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      ),
       cell: ({ row }) => {
-        const task = row.original;
-        const progress = calculateProgress(task);
-
-        if (task.taskTodos.length === 0) {
-          return <span className="text-xs text-muted-foreground">Sem itens</span>;
-        }
-
+        const requirement = row.original;
         return (
-          <div className="min-w-[120px]">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">
-                  {task.taskTodos.filter(t => t.isCompleted).length}/{task.taskTodos.length}
-                </span>
-                <span className="font-medium">{progress}%</span>
-              </div>
-              <Progress value={progress} className="h-1.5" />
-            </div>
+          <Badge variant={getPriorityColor(requirement.priority)} className="text-xs">
+            {requirement.priority}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "tasks",
+      header: "Tasks Vinculadas",
+      cell: ({ row }) => {
+        const requirement = row.original;
+        return (
+          <div className="text-sm">
+            {requirement.requirementTasks.length} task{requirement.requirementTasks.length !== 1 ? 's' : ''}
           </div>
         );
       },
@@ -203,26 +186,13 @@ export function TaskTable({ tasks }: TaskTableProps) {
         </Button>
       ),
       cell: ({ row }) => {
-        const task = row.original;
+        const requirement = row.original;
         return (
           <div className="flex items-center gap-1 text-sm min-w-[100px]">
             <Calendar className="h-3 w-3 text-muted-foreground" />
             <span>
-              {format(new Date(task.createdAt), "dd/MM/yyyy", { locale: ptBR })}
+              {format(new Date(requirement.createdAt), "dd/MM/yyyy", { locale: ptBR })}
             </span>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: "createdBy",
-      header: "Criado por",
-      cell: ({ row }) => {
-        const task = row.original;
-        return (
-          <div className="flex items-center gap-1 text-sm min-w-[100px]">
-            <User className="h-3 w-3 text-muted-foreground" />
-            <span>{task.createdBy}</span>
           </div>
         );
       },
@@ -231,14 +201,14 @@ export function TaskTable({ tasks }: TaskTableProps) {
       id: "actions",
       header: "Ações",
       cell: ({ row }) => {
-        const task = row.original;
+        const requirement = row.original;
         return (
           <div className="flex items-center gap-2 min-w-[120px]">
-            <EditTaskDialog task={task} onTaskUpdated={handleTaskUpdated} />
+            <EditRequirementDialog requirement={requirement} onRequirementUpdated={handleRequirementUpdated} />
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleViewDetails(task.id)}
+              onClick={() => handleViewDetails(requirement.id)}
             >
               Ver Detalhes
             </Button>
@@ -249,7 +219,7 @@ export function TaskTable({ tasks }: TaskTableProps) {
   ];
 
   const table = useReactTable({
-    data: tasks,
+    data: requirements,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -296,7 +266,7 @@ export function TaskTable({ tasks }: TaskTableProps) {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  Nenhuma tarefa encontrada.
+                  Nenhum requisito encontrado.
                 </TableCell>
               </TableRow>
             )}
@@ -307,7 +277,7 @@ export function TaskTable({ tasks }: TaskTableProps) {
       {/* Controles de Paginação */}
       <div className="flex items-center justify-between px-2">
         <div className="flex-1 text-sm text-muted-foreground">
-          Mostrando {table.getRowModel().rows.length} de {tasks.length} tarefas
+          Mostrando {table.getRowModel().rows.length} de {requirements.length} requisitos
         </div>
         <div className="flex items-center space-x-6 lg:space-x-8">
           <div className="flex items-center space-x-2">

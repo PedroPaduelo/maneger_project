@@ -34,7 +34,10 @@ import { EditProjectDialog } from "@/components/edit-project-dialog";
 import { DeleteProjectDialog } from "@/components/delete-project-dialog";
 import { HistorySummaryManager } from "@/components/history-summary-manager";
 import { TaskTable } from "@/components/task-table";
+import { RequirementTable } from "@/components/requirement-table";
 import { ViewToggle } from "@/components/view-toggle";
+import { useViewMode } from "@/hooks/use-view-mode";
+import { useRequirementViewMode } from "@/hooks/use-requirement-view-mode";
 
 export function ProjectDetails() {
   const params = useParams();
@@ -43,7 +46,8 @@ export function ProjectDetails() {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
+  const { viewMode, setViewMode, isLoaded } = useViewMode();
+  const { viewMode: requirementViewMode, setViewMode: setRequirementViewMode } = useRequirementViewMode();
 
   const projectId = params.id as string;
 
@@ -392,9 +396,12 @@ export function ProjectDetails() {
         <TabsContent value="requirements" className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Requisitos</h2>
-            <CreateRequirementDialog projectId={project.id} onRequirementCreated={handleRequirementCreated} />
+            <div className="flex items-center gap-2">
+              <ViewToggle viewMode={requirementViewMode} onViewModeChange={setRequirementViewMode} />
+              <CreateRequirementDialog projectId={project.id} onRequirementCreated={handleRequirementCreated} />
+            </div>
           </div>
-          
+
           {project.requirements.length === 0 ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center p-6">
@@ -407,11 +414,17 @@ export function ProjectDetails() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2">
-              {project.requirements.map((requirement) => (
-                <RequirementCard key={requirement.id} requirement={requirement} />
-              ))}
-            </div>
+            <>
+              {requirementViewMode === "cards" ? (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {project.requirements.map((requirement) => (
+                    <RequirementCard key={requirement.id} requirement={requirement} />
+                  ))}
+                </div>
+              ) : (
+                <RequirementTable requirements={project.requirements} />
+              )}
+            </>
           )}
         </TabsContent>
 
