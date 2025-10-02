@@ -138,9 +138,14 @@ export function ProjectCard({ project }: ProjectCardProps) {
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <CardTitle className="text-lg font-semibold line-clamp-2">
-              {project.name}
-            </CardTitle>
+            <div className="flex items-center gap-2 mb-1">
+              <CardTitle className="text-lg font-semibold line-clamp-2">
+                {project.name}
+              </CardTitle>
+              <Badge variant="secondary" className="text-xs font-mono">
+                #{project.id}
+              </Badge>
+            </div>
             <CardDescription className="line-clamp-2 mt-1">
               {project.description}
             </CardDescription>

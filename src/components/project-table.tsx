@@ -185,6 +185,18 @@ export function ProjectTable({ projects }: ProjectTableProps) {
 
   const columns: ColumnDef<Project>[] = [
     {
+      accessorKey: "id",
+      header: "ID",
+      cell: ({ row }) => {
+        const project = row.original;
+        return (
+          <div className="text-sm font-mono text-muted-foreground min-w-[80px]">
+            #{project.id}
+          </div>
+        );
+      },
+    },
+    {
       accessorKey: "name",
       header: ({ column }) => (
         <Button
