@@ -8,20 +8,21 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Project, Task, Requirement } from "@/lib/types";
-import { 
-  ArrowLeft, 
-  Calendar, 
-  Clock, 
-  Star, 
-  Users, 
-  GitBranch, 
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  Star,
+  Users,
+  GitBranch,
   CheckCircle,
   AlertCircle,
   Circle,
   Plus,
   Edit,
   Trash2,
-  Settings
+  Settings,
+  Play
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -201,9 +202,16 @@ export function ProjectDetails() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="default"
+            onClick={() => router.push(`/project/${project.id}/executor`)}
+          >
+            <Play className="h-4 w-4 mr-2" />
+            Task Executor
+          </Button>
           <EditProjectDialog project={project} onProjectUpdated={handleProjectUpdated} />
           <DeleteProjectDialog project={project} onProjectDeleted={handleProjectDeleted} />
-          <Button>
+          <Button variant="outline">
             <Settings className="h-4 w-4 mr-2" />
             Configurações
           </Button>

@@ -11,9 +11,10 @@ import { useToast } from "@/hooks/use-toast";
 interface DeleteProjectDialogProps {
   project: Project;
   onProjectDeleted: () => void;
+  trigger?: React.ReactNode;
 }
 
-export function DeleteProjectDialog({ project, onProjectDeleted }: DeleteProjectDialogProps) {
+export function DeleteProjectDialog({ project, onProjectDeleted, trigger }: DeleteProjectDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -51,10 +52,12 @@ export function DeleteProjectDialog({ project, onProjectDeleted }: DeleteProject
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">
-          <Trash2 className="h-4 w-4 mr-2" />
-          Excluir
-        </Button>
+        {trigger || (
+          <Button variant="outline">
+            <Trash2 className="h-4 w-4 mr-2" />
+            Excluir
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>

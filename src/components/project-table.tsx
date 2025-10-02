@@ -14,6 +14,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Calendar,
   Clock,
   CheckCircle,
@@ -22,6 +30,10 @@ import {
   Star,
   GitBranch,
   ArrowUpDown,
+  MoreHorizontal,
+  Eye,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -40,6 +52,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { toast } from "sonner";
 
 interface ProjectTableProps {
   projects: Project[];
@@ -107,11 +120,15 @@ export function ProjectTable({ projects }: ProjectTableProps) {
   }, [statusFilter]);
 
   const handleProjectUpdated = () => {
-    window.location.reload();
+    toast.success("Projeto atualizado", {
+      description: "As informações do projeto foram atualizadas com sucesso."
+    });
   };
 
   const handleProjectDeleted = () => {
-    window.location.reload();
+    toast.success("Projeto excluído", {
+      description: "O projeto foi removido permanentemente."
+    });
   };
 
   const getStatusIcon = (status: string) => {
@@ -163,9 +180,15 @@ export function ProjectTable({ projects }: ProjectTableProps) {
         throw new Error("Failed to update project");
       }
 
-      window.location.reload();
+      const action = project.isFavorite ? "removido dos" : "adicionado aos";
+      toast.success(`Projeto ${action} favoritos`, {
+        description: `"${project.name}" foi ${action} favoritos com sucesso.`
+      });
     } catch (error) {
       console.error("Error toggling favorite:", error);
+      toast.error("Erro ao atualizar favoritos", {
+        description: "Não foi possível atualizar o status de favoritos do projeto."
+      });
     }
   };
 
@@ -349,24 +372,89 @@ export function ProjectTable({ projects }: ProjectTableProps) {
       cell: ({ row }) => {
         const project = row.original;
         return (
-          <div className="flex items-center gap-2 min-w-[200px]">
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleViewDetails(project.id)}
+              className="h-8 w-8 p-0 hover:bg-accent"
+              title="Ver detalhes"
+            >
+              <Eye className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+            </Button>
+
             <Button
               variant="ghost"
               size="sm"
               onClick={() => handleToggleFavorite(project)}
-              className="h-8 w-8 p-0"
+              className="h-8 w-8 p-0 hover:bg-accent"
+              title={project.isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
             >
-              <Star className={`h-4 w-4 ${project.isFavorite ? 'text-yellow-500 fill-current' : ''}`} />
+              <Star className={`h-4 w-4 transition-colors ${project.isFavorite ? 'text-yellow-500 fill-current' : 'text-muted-foreground hover:text-foreground'}`} />
             </Button>
-            <EditProjectDialog project={project} onProjectUpdated={handleProjectUpdated} />
-            <DeleteProjectDialog project={project} onProjectDeleted={handleProjectDeleted} />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleViewDetails(project.id)}
-            >
-              Ver Detalhes
-            </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 hover:bg-accent"
+                  title="Mais ações"
+                >
+                  <MoreHorizontal className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52 z-50">
+                <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                  Ações do projeto
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => handleViewDetails(project.id)}
+                  className="cursor-pointer"
+                >
+                  <Eye className="mr-2 h-4 w-4" />
+                  <span>Ver detalhes</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleToggleFavorite(project)}
+                  className="cursor-pointer"
+                >
+                  <Star className="mr-2 h-4 w-4" />
+                  <span>
+                    {project.isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                  </span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <EditProjectDialog
+                  project={project}
+                  onProjectUpdated={handleProjectUpdated}
+                  trigger={
+                    <DropdownMenuItem
+                      onSelect={(e) => e.preventDefault()}
+                      className="cursor-pointer"
+                    >
+                      <Edit className="mr-2 h-4 w-4" />
+                      <span>Editar projeto</span>
+                    </DropdownMenuItem>
+                  }
+                />
+                <DropdownMenuSeparator />
+                <DeleteProjectDialog
+                  project={project}
+                  onProjectDeleted={handleProjectDeleted}
+                  trigger={
+                    <DropdownMenuItem
+                      onSelect={(e) => e.preventDefault()}
+                      className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      <span>Excluir projeto</span>
+                    </DropdownMenuItem>
+                  }
+                />
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         );
       },

@@ -15,9 +15,10 @@ import { useToast } from "@/hooks/use-toast";
 interface EditProjectDialogProps {
   project: Project;
   onProjectUpdated: () => void;
+  trigger?: React.ReactNode;
 }
 
-export function EditProjectDialog({ project, onProjectUpdated }: EditProjectDialogProps) {
+export function EditProjectDialog({ project, onProjectUpdated, trigger }: EditProjectDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -104,10 +105,12 @@ export function EditProjectDialog({ project, onProjectUpdated }: EditProjectDial
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">
-          <Edit className="h-4 w-4 mr-2" />
-          Editar
-        </Button>
+        {trigger || (
+          <Button variant="outline">
+            <Edit className="h-4 w-4 mr-2" />
+            Editar
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
