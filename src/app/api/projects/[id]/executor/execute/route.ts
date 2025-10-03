@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { StartExecutionRequest, TaskExecution } from '@/types/executor';
 import { v4 as uuidv4 } from 'uuid';
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
 
@@ -267,32 +267,19 @@ async function executeTaskLocally(
       );
     }
 
-    // Executar comando no diretório especificado
-    const { stdout, stderr } = await execAsync(commands, {
-      cwd: executionPath,
-      timeout: 14400000, // 4 horas timeout (para suportar tasks de 3+ horas)
-      maxBuffer: 1024 * 1024 * 50, // 50MB buffer para aumentar capacidade
-    });
+    console.log('🚀 Iniciando execução do comando...');
+    console.log('📁 Diretório de execução:', executionPath);
 
-    const output = [stdout, stderr].filter(Boolean).join('\n');
+    // Usar spawn em vez de exec para melhor controle
+    const result = await executeWithSpawn(commands, executionPath);
 
-    return { output };
+    return { output: result };
   } catch (error: any) {
     let errorMessage = `Command execution failed: ${error.message}`;
 
     // Adicionar informações específicas se for timeout
     if (error.code === 'ETIMEDOUT') {
-      errorMessage += '\n\n⚠️ ERRO DE TIMEOUT: A execução ultrapassou o tempo limite (4 horas).\nDica: Considere dividir tasks grandes em partes menores.';
-    }
-
-    // Adicionar stderr se existir
-    if (error.stderr) {
-      errorMessage += `\n\nStderr:\n${error.stderr}`;
-    }
-
-    // Adicionar stdout se existir (pode conter resultado parcial)
-    if (error.stdout) {
-      errorMessage += `\n\nStdout (saída parcial):\n${error.stdout}`;
+      errorMessage += '\n\n⚠️ ERRO DE TIMEOUT: A execução ultrapassou o tempo limite.\nDica: Considere dividir tasks grandes em partes menores.';
     }
 
     // Adicionar comando executado para debug
@@ -300,6 +287,74 @@ async function executeTaskLocally(
 
     throw new Error(errorMessage);
   }
+}
+
+// Função alternativa usando spawn para melhor controle
+async function executeWithSpawn(command: string, cwd: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    console.log('🔥 Usando spawn para executar comando...');
+
+    // Dividir o comando em partes
+    const parts = command.split(' ');
+    const cmd = parts[0];
+    const args = parts.slice(1);
+
+    console.log('📝 Comando:', cmd);
+    console.log('📝 Args:', args);
+
+    const child = spawn(cmd, args, {
+      cwd: cwd,
+      stdio: ['pipe', 'pipe', 'pipe'],
+      env: {
+        ...process.env,
+        FORCE_COLOR: '0'
+      }
+    });
+
+    let stdout = '';
+    let stderr = '';
+
+    child.stdout?.on('data', (data) => {
+      const text = data.toString();
+      stdout += text;
+      console.log('📊 Stdout chunk:', text.length, 'caracteres');
+    });
+
+    child.stderr?.on('data', (data) => {
+      const text = data.toString();
+      stderr += text;
+      console.log('⚠️ Stderr chunk:', text.length, 'caracteres');
+    });
+
+    child.on('error', (error) => {
+      console.log('❌ Erro no processo:', error);
+      reject(error);
+    });
+
+    child.on('close', (code) => {
+      console.log(`🏁 Processo finalizado com código: ${code}`);
+      console.log('📊 Tamanho total stdout:', stdout.length);
+      console.log('📊 Tamanho total stderr:', stderr.length);
+
+      if (code === 0) {
+        const output = [stdout, stderr].filter(Boolean).join('\n');
+        resolve(output);
+      } else {
+        reject(new Error(`Command failed with exit code ${code}\nStderr: ${stderr}`));
+      }
+    });
+
+    // Timeout manual
+    const timeout = setTimeout(() => {
+      console.log('⏰ Timeout alcançado, matando processo...');
+      child.kill('SIGKILL');
+      reject(new Error('Execution timeout (4 hours)'));
+    }, 14400000); // 4 horas
+
+    child.on('close', () => {
+      clearTimeout(timeout);
+    });
+  });
 }
 
 // Verificar se deve usar comando Claude
@@ -380,6 +435,8 @@ function isValidCommand(text: string): boolean {
 
   const trimmedText = text.trim();
 
+  console.log('🔍 Validando comando:', trimmedText.substring(0, 100) + '...');
+
   // Verificar se é um comando Claude API válido
   const claudePatterns = [
     /^claude\s/,
@@ -388,6 +445,7 @@ function isValidCommand(text: string): boolean {
   ];
 
   if (claudePatterns.some(pattern => pattern.test(trimmedText))) {
+    console.log('✅ Comando Claude validado com sucesso');
     return true;
   }
 
@@ -397,6 +455,7 @@ function isValidCommand(text: string): boolean {
 
   // Se contiver frases descritivas completas, provavelmente não é um comando shell
   if (portugueseWords.some(phrase => lowerText.includes(phrase))) {
+    console.log('❌ Texto em português detectado, não é comando shell');
     return false;
   }
 
@@ -427,7 +486,9 @@ function isValidCommand(text: string): boolean {
     /^./,
   ];
 
-  return commandPatterns.some(pattern => pattern.test(trimmedText));
+  const isValid = commandPatterns.some(pattern => pattern.test(trimmedText));
+  console.log(`${isValid ? '✅' : '❌'} Comando shell ${isValid ? 'válido' : 'inválido'}`);
+  return isValid;
 }
 
 export { executions };
