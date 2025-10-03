@@ -115,7 +115,8 @@ export async function PUT(
         progress: body.progress,
         isFavorite: body.isFavorite,
         color: body.color,
-        tags: body.tags
+        tags: body.tags,
+        executionPath: body.executionPath
       },
       include: {
         tasks: {

@@ -22,7 +22,12 @@ export class ExecutorAPI {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(request),
     });
-    if (!response.ok) throw new Error('Failed to start execution');
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || error.error || 'Failed to start execution');
+    }
+
     return response.json();
   }
 
@@ -44,7 +49,12 @@ export class ExecutorAPI {
    */
   static async getExecutionStatus(executionId: string): Promise<TaskExecution> {
     const response = await fetch(`/api/executor/${executionId}/status`);
-    if (!response.ok) throw new Error('Failed to fetch execution status');
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error('EXECUTION_NOT_FOUND');
+      }
+      throw new Error('Failed to fetch execution status');
+    }
     return response.json();
   }
 

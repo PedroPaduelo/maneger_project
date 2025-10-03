@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Plus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { DirectorySelector } from "@/components/directory-selector";
 
 interface CreateProjectDialogProps {
   onProjectCreated: () => void;
@@ -29,6 +30,7 @@ export function CreateProjectDialog({ onProjectCreated }: CreateProjectDialogPro
     isFavorite: false,
     color: "#3b82f6",
     tags: [] as string[],
+    executionPath: "",
   });
   const [newTag, setNewTag] = useState("");
   const { toast } = useToast();
@@ -82,6 +84,7 @@ export function CreateProjectDialog({ onProjectCreated }: CreateProjectDialogPro
         isFavorite: false,
         color: "#3b82f6",
         tags: [],
+        executionPath: "",
       });
       setNewTag("");
       setOpen(false);
@@ -227,6 +230,18 @@ export function CreateProjectDialog({ onProjectCreated }: CreateProjectDialogPro
               placeholder="Observações adicionais sobre o projeto..."
               rows={2}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="executionPath">Diretório de Execução (Opcional)</Label>
+            <DirectorySelector
+              value={formData.executionPath}
+              onChange={(path) => setFormData(prev => ({ ...prev, executionPath: path }))}
+              placeholder="Selecione o diretório onde as tasks serão executadas..."
+            />
+            <p className="text-xs text-gray-500">
+              Diretório local onde os comandos das tasks serão executados. Pode ser configurado depois.
+            </p>
           </div>
 
           <div className="space-y-2">

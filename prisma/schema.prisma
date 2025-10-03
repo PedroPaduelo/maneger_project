@@ -71,7 +71,7 @@ model User {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
   deletedAt     DateTime? @map("deleted_at")
-  
+
   accounts      Account[]
   sessions      Session[]
   tokens        Token[]
@@ -95,9 +95,10 @@ model Project {
   priority          String                    @default("Média") 
   progress          Int                       @default(0)
   isFavorite        Boolean                   @default(false) @map("is_favorite")
-  color             String?                   
+  color             String?
   tags              String?
   metadata          Json?
+  executionPath     String?                   @map("execution_path")
   createdAt         DateTime                  @default(now()) @map("created_at")
   updatedAt         DateTime                  @updatedAt @map("updated_at")
   historySummaries  HistorySummary[]

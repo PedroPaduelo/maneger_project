@@ -126,6 +126,7 @@ export async function POST(request: NextRequest) {
         color: body.color,
         tags: body.tags ? JSON.stringify(body.tags) : null,
         metadata: body.metadata,
+        executionPath: body.executionPath,
         // Remove userId for development
         // userId: session.user.id
       },

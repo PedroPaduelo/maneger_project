@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Project } from "@/lib/types";
 import { Edit, Save, X, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { DirectorySelector } from "@/components/directory-selector";
 
 interface EditProjectDialogProps {
   project: Project;
@@ -42,7 +43,8 @@ export function EditProjectDialog({ project, onProjectUpdated, trigger }: EditPr
     progress: project.progress,
     isFavorite: project.isFavorite,
     color: project.color || "",
-    tags: parseTags(project.tags)
+    tags: parseTags(project.tags),
+    executionPath: (project as any).executionPath || ""
   });
 
   const [newTag, setNewTag] = useState("");
@@ -163,6 +165,18 @@ export function EditProjectDialog({ project, onProjectUpdated, trigger }: EditPr
               placeholder="Observações sobre o projeto"
               rows={2}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="executionPath">Diretório de Execução</Label>
+            <DirectorySelector
+              value={formData.executionPath}
+              onChange={(path) => setFormData({ ...formData, executionPath: path })}
+              placeholder="Selecione o diretório onde as tasks serão executadas..."
+            />
+            <p className="text-xs text-gray-500">
+              Diretório onde os comandos das tasks serão executados localmente
+            </p>
           </div>
 
           <div className="grid grid-cols-3 gap-4">

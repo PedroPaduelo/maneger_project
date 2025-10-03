@@ -85,7 +85,14 @@ export function useExecutor({ projectId, autoRefresh = false, refreshInterval = 
       const updated = await ExecutorAPI.getExecutionStatus(execution.id);
       setExecution(updated);
     } catch (err: any) {
-      console.error('Failed to refresh execution:', err);
+      // Se a execução não foi encontrada (404), limpar o estado
+      if (err.message === 'EXECUTION_NOT_FOUND') {
+        console.warn('Execution not found, clearing state');
+        setExecution(null);
+        setError('Execução não encontrada. O servidor pode ter sido reiniciado.');
+      } else {
+        console.error('Failed to refresh execution:', err);
+      }
     }
   }, [execution]);
 
