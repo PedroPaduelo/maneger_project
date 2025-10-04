@@ -46,6 +46,7 @@ import {
 import { useTagsWithCount, useCreateTag, useUpdateTag, useDeleteTag } from '@/hooks/useTags';
 import { TagWithCount } from '@/hooks/useTags';
 import { TagComponent } from '@/components/tag-component';
+import { SidebarLayout } from '@/components/sidebar-layout';
 
 // Color options for tags
 const TAG_COLORS = [
@@ -229,18 +230,25 @@ export default function TagsPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6 max-w-7xl">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <TagIcon className="h-8 w-8" />
-            Tags
-          </h1>
-          <p className="text-muted-foreground">
-            Gerencie as tags do sistema para organizar seus projetos
-          </p>
-        </div>
+    <SidebarLayout
+      title="Tags"
+      breadcrumbs={[
+        { label: "Dashboard", href: "/" },
+        { label: "Tags" }
+      ]}
+    >
+      <div className="space-y-6 max-w-7xl">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+              <TagIcon className="h-8 w-8" />
+              Tags
+            </h1>
+            <p className="text-muted-foreground">
+              Gerencie as tags do sistema para organizar seus projetos
+            </p>
+          </div>
 
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
@@ -642,6 +650,7 @@ export default function TagsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </SidebarLayout>
   );
 }

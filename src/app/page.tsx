@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { Dashboard } from "@/components/dashboard";
 import { useProjects, useTasksQuery, useRequirements } from "@/hooks";
 import { Project, Task, Requirement, HistorySummary } from "@/lib/types";
-import { Button } from "@/components/ui/button";
+import { SidebarLayout } from "@/components/sidebar-layout";
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -87,13 +87,16 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <SidebarLayout
+      title="Dashboard"
+      breadcrumbs={[{ label: "Dashboard" }]}
+    >
       <Dashboard
         projects={projects}
         tasks={tasks}
         requirements={requirements}
         historySummaries={historySummaries}
       />
-    </div>
+    </SidebarLayout>
   );
 }

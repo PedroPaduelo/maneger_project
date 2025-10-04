@@ -12,6 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { SidebarLayout } from '@/components/sidebar-layout';
 import {
   User,
   Bell,
@@ -131,23 +132,30 @@ function SettingsPage() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6 max-w-6xl">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Configurações</h1>
-          <p className="text-muted-foreground">
-            Gerencie suas preferências e configurações da conta
-          </p>
+    <SidebarLayout
+      title="Configurações"
+      breadcrumbs={[
+        { label: "Dashboard", href: "/" },
+        { label: "Configurações" }
+      ]}
+    >
+      <div className="space-y-6 max-w-6xl">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Configurações</h1>
+            <p className="text-muted-foreground">
+              Gerencie suas preferências e configurações da conta
+            </p>
+          </div>
+          <Avatar className="h-16 w-16">
+            <AvatarImage src={session?.user?.image || ''} alt={session?.user?.name || ''} />
+            <AvatarFallback className="text-lg">
+              {session?.user?.firstName?.charAt(0)}
+              {session?.user?.lastName?.charAt(0)}
+            </AvatarFallback>
+          </Avatar>
         </div>
-        <Avatar className="h-16 w-16">
-          <AvatarImage src={session?.user?.image || ''} alt={session?.user?.name || ''} />
-          <AvatarFallback className="text-lg">
-            {session?.user?.firstName?.charAt(0)}
-            {session?.user?.lastName?.charAt(0)}
-          </AvatarFallback>
-        </Avatar>
-      </div>
 
       {/* Tabs */}
       <Tabs defaultValue="profile" className="space-y-6">
@@ -644,7 +652,8 @@ function SettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </SidebarLayout>
   );
 }
 

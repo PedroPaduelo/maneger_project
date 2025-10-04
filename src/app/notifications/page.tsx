@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { SidebarLayout } from "@/components/sidebar-layout";
 
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -189,23 +190,22 @@ export default function NotificationsPage() {
   });
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar ao Dashboard
-            </Button>
-          </Link>
+    <SidebarLayout
+      title="Notificações"
+      breadcrumbs={[
+        { label: "Dashboard", href: "/" },
+        { label: "Notificações" }
+      ]}
+    >
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Notificações</h1>
             <p className="text-muted-foreground">
               Gerencie todas as suas notificações em um só lugar
             </p>
           </div>
-        </div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -393,6 +393,7 @@ export default function NotificationsPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </SidebarLayout>
   );
 }
