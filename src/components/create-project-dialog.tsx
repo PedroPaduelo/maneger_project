@@ -9,10 +9,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Check, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { DirectorySelector } from "@/components/directory-selector";
 import { MarkdownEditor } from "@/components/markdown-editor";
+import { useTags, useCreateTag } from "@/hooks/useTags";
 
 interface CreateProjectDialogProps {
   onProjectCreated: () => void;
@@ -34,6 +35,10 @@ export function CreateProjectDialog({ onProjectCreated }: CreateProjectDialogPro
   });
   const [newTag, setNewTag] = useState("");
   const { toast } = useToast();
+
+  // Hooks para tags
+  const { data: existingTags = [], isLoading: tagsLoading } = useTags();
+  const createTagMutation = useCreateTag();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,11 +106,29 @@ export function CreateProjectDialog({ onProjectCreated }: CreateProjectDialogPro
     }
   };
 
-  const addTag = () => {
+  const addTag = async () => {
     if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
+      const trimmedTag = newTag.trim();
+
+      // Check if tag exists in database
+      const tagExists = existingTags.some(tag =>
+        tag.name.toLowerCase() === trimmedTag.toLowerCase()
+      );
+
+      // If tag doesn't exist, create it
+      if (!tagExists) {
+        try {
+          await createTagMutation.mutateAsync({ name: trimmedTag });
+        } catch (error) {
+          console.error("Error creating tag:", error);
+          // Even if creation fails, we can still add it to the form
+          // It will be created when the project is saved
+        }
+      }
+
       setFormData(prev => ({
         ...prev,
-        tags: [...prev.tags, newTag.trim()]
+        tags: [...prev.tags, trimmedTag]
       }));
       setNewTag("");
     }
@@ -123,6 +146,23 @@ export function CreateProjectDialog({ onProjectCreated }: CreateProjectDialogPro
       e.preventDefault();
       addTag();
     }
+  };
+
+  const addExistingTag = (tagName: string) => {
+    if (!formData.tags.includes(tagName)) {
+      setFormData(prev => ({
+        ...prev,
+        tags: [...prev.tags, tagName]
+      }));
+    }
+  };
+
+  const getAvailableTags = () => {
+    return existingTags.filter(tag =>
+      !formData.tags.some(selectedTag =>
+        selectedTag.toLowerCase() === tag.name.toLowerCase()
+      )
+    );
   };
 
   return (
@@ -263,29 +303,93 @@ Desenvolver plataforma completa de e-commerce
 
           <div className="space-y-2">
             <Label>Tags</Label>
+
+            {/* Existing Tags Selector */}
+            {!tagsLoading && getAvailableTags().length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-sm text-gray-600">Tags existentes:</Label>
+                <div className="flex flex-wrap gap-2">
+                  {getAvailableTags().slice(0, 8).map((tag) => (
+                    <Badge
+                      key={tag.id}
+                      variant="outline"
+                      className="cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                      style={{
+                        backgroundColor: tag.color ? `${tag.color}20` : undefined,
+                        borderColor: tag.color || undefined
+                      }}
+                      onClick={() => addExistingTag(tag.name)}
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      {tag.name}
+                    </Badge>
+                  ))}
+                  {getAvailableTags().length > 8 && (
+                    <Badge variant="outline" className="text-gray-500">
+                      +{getAvailableTags().length - 8} mais
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Tag Input */}
             <div className="flex gap-2">
               <Input
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Adicionar tag"
+                placeholder="Criar nova tag..."
                 className="flex-1"
               />
-              <Button type="button" onClick={addTag} variant="outline" size="sm">
-                <Plus className="h-4 w-4" />
+              <Button
+                type="button"
+                onClick={addTag}
+                variant="outline"
+                size="sm"
+                disabled={createTagMutation.isPending}
+              >
+                {createTagMutation.isPending ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
               </Button>
             </div>
+
+            {/* Selected Tags */}
             {formData.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {formData.tags.map((tag, index) => (
-                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                    {tag}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={() => removeTag(tag)}
-                    />
-                  </Badge>
-                ))}
+              <div className="space-y-2">
+                <Label className="text-sm text-gray-600">Tags selecionadas:</Label>
+                <div className="flex flex-wrap gap-2">
+                  {formData.tags.map((tag, index) => {
+                    // Find the tag object to get its color
+                    const tagObject = existingTags.find(t => t.name === tag);
+                    return (
+                      <Badge
+                        key={index}
+                        variant="outline"
+                        className="flex items-center gap-1 text-xs"
+                        style={{
+                          backgroundColor: tagObject?.color ? `${tagObject.color}20` : undefined,
+                          borderColor: tagObject?.color || undefined
+                        }}
+                      >
+                        <Check className="h-3 w-3" />
+                        {tag}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-4 w-4 p-0 hover:bg-transparent hover:text-red-500"
+                          onClick={() => removeTag(tag)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>

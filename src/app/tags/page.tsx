@@ -478,13 +478,21 @@ export default function TagsPage() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <div
-                          className={`w-4 h-4 rounded border ${
+                          className={`w-6 h-6 rounded border-2 ${
                             tag.color ? getTagColor(tag.color).split(' ')[0] : 'bg-gray-100'
                           }`}
                         />
-                        <span className="text-sm capitalize">
-                          {tag.color || 'Padrão'}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium capitalize">
+                            {tag.color || 'Padrão'}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {tag.color
+                              ? TAG_COLORS.find(c => c.value === tag.color)?.label || tag.color
+                              : 'Sem cor definida'
+                            }
+                          </span>
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>

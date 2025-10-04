@@ -9,11 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Project } from "@/lib/types";
-import { Edit, Save, X, Plus, Trash2 } from "lucide-react";
+import { Edit, Save, X, Plus, Trash2, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useUpdateProject } from "@/hooks";
 import { DirectorySelector } from "@/components/directory-selector";
 import { MarkdownEditor } from "@/components/markdown-editor";
+import { useTags, useCreateTag } from "@/hooks/useTags";
 
 interface EditProjectDialogProps {
   project: Project;
@@ -25,6 +26,10 @@ export function EditProjectDialog({ project, onProjectUpdated, trigger }: EditPr
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const updateProject = useUpdateProject();
+
+  // Hooks para tags
+  const { data: existingTags = [], isLoading: tagsLoading } = useTags();
+  const createTagMutation = useCreateTag();
   
   const parseTags = (tags: string | null) => {
     if (!tags) return [];
@@ -49,11 +54,29 @@ export function EditProjectDialog({ project, onProjectUpdated, trigger }: EditPr
 
   const [newTag, setNewTag] = useState("");
 
-  const addTag = () => {
+  const addTag = async () => {
     if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
+      const trimmedTag = newTag.trim();
+
+      // Check if tag exists in database
+      const tagExists = existingTags.some(tag =>
+        tag.name.toLowerCase() === trimmedTag.toLowerCase()
+      );
+
+      // If tag doesn't exist, create it
+      if (!tagExists) {
+        try {
+          await createTagMutation.mutateAsync({ name: trimmedTag });
+        } catch (error) {
+          console.error("Error creating tag:", error);
+          // Even if creation fails, we can still add it to the form
+          // It will be created when the project is saved
+        }
+      }
+
       setFormData({
         ...formData,
-        tags: [...formData.tags, newTag.trim()]
+        tags: [...formData.tags, trimmedTag]
       });
       setNewTag("");
     }
@@ -72,13 +95,30 @@ export function EditProjectDialog({ project, onProjectUpdated, trigger }: EditPr
     updateProject.mutate({
       id: project.id,
       ...formData,
-      tags: formData.tags.length > 0 ? JSON.stringify(formData.tags) : null
+      tags: formData.tags
     }, {
       onSuccess: () => {
         setOpen(false);
         onProjectUpdated();
       }
     });
+  };
+
+  const addExistingTag = (tagName: string) => {
+    if (!formData.tags.includes(tagName)) {
+      setFormData({
+        ...formData,
+        tags: [...formData.tags, tagName]
+      });
+    }
+  };
+
+  const getAvailableTags = () => {
+    return existingTags.filter(tag =>
+      !formData.tags.some(selectedTag =>
+        selectedTag.toLowerCase() === tag.name.toLowerCase()
+      )
+    );
   };
 
   return (
@@ -188,33 +228,93 @@ export function EditProjectDialog({ project, onProjectUpdated, trigger }: EditPr
   
           <div className="space-y-2">
             <Label>Tags</Label>
+
+            {/* Existing Tags Selector */}
+            {!tagsLoading && getAvailableTags().length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-sm text-gray-600">Tags existentes:</Label>
+                <div className="flex flex-wrap gap-2">
+                  {getAvailableTags().slice(0, 8).map((tag) => (
+                    <Badge
+                      key={tag.id}
+                      variant="outline"
+                      className="cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                      style={{
+                        backgroundColor: tag.color ? `${tag.color}20` : undefined,
+                        borderColor: tag.color || undefined
+                      }}
+                      onClick={() => addExistingTag(tag.name)}
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      {tag.name}
+                    </Badge>
+                  ))}
+                  {getAvailableTags().length > 8 && (
+                    <Badge variant="outline" className="text-gray-500">
+                      +{getAvailableTags().length - 8} mais
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Tag Input */}
             <div className="flex gap-2 mb-2">
               <Input
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
-                placeholder="Adicionar tag"
+                placeholder="Criar nova tag..."
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
               />
-              <Button type="button" onClick={addTag} size="sm">
-                <Plus className="h-4 w-4" />
+              <Button
+                type="button"
+                onClick={addTag}
+                size="sm"
+                disabled={createTagMutation.isPending}
+              >
+                {createTagMutation.isPending ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
               </Button>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {formData.tags.map((tag, index) => (
-                <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                  {tag}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-4 w-4 p-0 hover:bg-transparent"
-                    onClick={() => removeTag(tag)}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </Badge>
-              ))}
-            </div>
+
+            {/* Selected Tags */}
+            {formData.tags.length > 0 && (
+              <div className="space-y-2">
+                <Label className="text-sm text-gray-600">Tags selecionadas:</Label>
+                <div className="flex flex-wrap gap-2">
+                  {formData.tags.map((tag, index) => {
+                    // Find the tag object to get its color
+                    const tagObject = existingTags.find(t => t.name === tag);
+                    return (
+                      <Badge
+                        key={index}
+                        variant="outline"
+                        className="flex items-center gap-1 text-xs"
+                        style={{
+                          backgroundColor: tagObject?.color ? `${tagObject.color}20` : undefined,
+                          borderColor: tagObject?.color || undefined
+                        }}
+                      >
+                        <Check className="h-3 w-3" />
+                        {tag}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-4 w-4 p-0 hover:bg-transparent hover:text-red-500"
+                          onClick={() => removeTag(tag)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </Badge>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center space-x-2">

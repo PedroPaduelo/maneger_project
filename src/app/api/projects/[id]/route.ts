@@ -93,7 +93,7 @@ export async function PUT(
         userId: session.user.id
       }
     });
-    
+
     if (!existingProject) {
       return NextResponse.json(
         { error: "Project not found or access denied" },
@@ -115,7 +115,7 @@ export async function PUT(
         progress: body.progress,
         isFavorite: body.isFavorite,
         color: body.color,
-        tags: body.tags,
+        tags: body.tags ? JSON.stringify(body.tags) : null,
         executionPath: body.executionPath
       },
       include: {
@@ -146,6 +146,54 @@ export async function PUT(
         }
       }
     });
+
+    // Handle tags association if provided
+    if (body.tags !== undefined) {
+      // First, delete all existing project-tag associations
+      await db.projectTag.deleteMany({
+        where: {
+          projectId: parseInt(resolvedParams.id)
+        }
+      });
+
+      // If new tags are provided, create associations
+      if (body.tags && body.tags.length > 0) {
+        // First, ensure all tags exist in the database
+        const tagPromises = body.tags.map(async (tagName: string) => {
+          // Check if tag already exists
+          let tag = await db.tag.findFirst({
+            where: { name: tagName }
+          });
+
+          // If tag doesn't exist, create it
+          if (!tag) {
+            tag = await db.tag.create({
+              data: {
+                name: tagName,
+                color: null,
+                description: null
+              }
+            });
+          }
+
+          return tag;
+        });
+
+        const resolvedTags = await Promise.all(tagPromises);
+
+        // Create associations between project and tags
+        const projectTagPromises = resolvedTags.map(tag =>
+          db.projectTag.create({
+            data: {
+              projectId: parseInt(resolvedParams.id),
+              tagId: tag.id
+            }
+          })
+        );
+
+        await Promise.all(projectTagPromises);
+      }
+    }
 
     return NextResponse.json(project);
   } catch (error) {
@@ -179,7 +227,7 @@ export async function DELETE(
         userId: session.user.id
       }
     });
-    
+
     if (!existingProject) {
       return NextResponse.json(
         { error: "Project not found or access denied" },

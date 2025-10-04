@@ -351,6 +351,52 @@ export function ProjectTable({ projects }: ProjectTableProps) {
       },
     },
     {
+      accessorKey: "tags",
+      header: "Tags",
+      cell: ({ row }) => {
+        const project = row.original;
+
+        // Display tags from projectTags relationship (new format)
+        if (project.projectTags && project.projectTags.length > 0) {
+          return (
+            <div className="flex flex-wrap gap-1 min-w-[150px]">
+              {project.projectTags.slice(0, 3).map(({ tag }) => (
+                <Badge key={tag.id} variant="outline" className="text-xs">
+                  {tag.name}
+                </Badge>
+              ))}
+              {project.projectTags.length > 3 && (
+                <Badge variant="outline" className="text-xs text-muted-foreground">
+                  +{project.projectTags.length - 3}
+                </Badge>
+              )}
+            </div>
+          );
+        }
+
+        // Fallback: parse tags from legacy format (JSON string or comma-separated)
+        const legacyTags = parseTags(project.tags);
+        if (legacyTags.length > 0) {
+          return (
+            <div className="flex flex-wrap gap-1 min-w-[150px]">
+              {legacyTags.slice(0, 3).map((tag, index) => (
+                <Badge key={index} variant="outline" className="text-xs">
+                  {tag}
+                </Badge>
+              ))}
+              {legacyTags.length > 3 && (
+                <Badge variant="outline" className="text-xs text-muted-foreground">
+                  +{legacyTags.length - 3}
+                </Badge>
+              )}
+            </div>
+          );
+        }
+
+        return <span className="text-xs text-muted-foreground">-</span>;
+      },
+    },
+    {
       accessorKey: "createdAt",
       header: ({ column }) => (
         <Button

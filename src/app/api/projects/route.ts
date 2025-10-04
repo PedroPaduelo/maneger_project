@@ -155,6 +155,51 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    // Handle tags association if provided
+    if (body.tags && body.tags.length > 0) {
+      // First, ensure all tags exist in the database
+      const tagPromises = body.tags.map(async (tagName: string) => {
+        // Check if tag already exists
+        let tag = await db.tag.findFirst({
+          where: { name: tagName }
+        });
+
+        // If tag doesn't exist, create it
+        if (!tag) {
+          tag = await db.tag.create({
+            data: {
+              name: tagName,
+              color: null,
+              description: null
+            }
+          });
+        }
+
+        return tag;
+      });
+
+      const resolvedTags = await Promise.all(tagPromises);
+
+      // Create associations between project and tags
+      const projectTagPromises = resolvedTags.map(tag =>
+        db.projectTag.upsert({
+          where: {
+            projectId_tagId: {
+              projectId: project.id,
+              tagId: tag.id
+            }
+          },
+          update: {},
+          create: {
+            projectId: project.id,
+            tagId: tag.id
+          }
+        })
+      );
+
+      await Promise.all(projectTagPromises);
+    }
+
   
     return NextResponse.json(project, { status: 201 });
   } catch (error) {
