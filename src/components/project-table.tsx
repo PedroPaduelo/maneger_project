@@ -53,6 +53,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { toast } from "sonner";
+import { TagList } from "@/components/tag-component";
 
 interface ProjectTableProps {
   projects: Project[];
@@ -356,39 +357,21 @@ export function ProjectTable({ projects }: ProjectTableProps) {
       cell: ({ row }) => {
         const project = row.original;
 
-        // Display tags from projectTags relationship (new format)
-        if (project.projectTags && project.projectTags.length > 0) {
-          return (
-            <div className="flex flex-wrap gap-1 min-w-[150px]">
-              {project.projectTags.slice(0, 3).map(({ tag }) => (
-                <Badge key={tag.id} variant="outline" className="text-xs">
-                  {tag.name}
-                </Badge>
-              ))}
-              {project.projectTags.length > 3 && (
-                <Badge variant="outline" className="text-xs text-muted-foreground">
-                  +{project.projectTags.length - 3}
-                </Badge>
-              )}
-            </div>
-          );
-        }
-
-        // Fallback: parse tags from legacy format (JSON string or comma-separated)
+        // Get tags from both the new projectTags relationship and legacy format
+        const projectTags = project.projectTags?.map(pt => pt.tag) || [];
         const legacyTags = parseTags(project.tags);
-        if (legacyTags.length > 0) {
+        const allTags = [...projectTags, ...legacyTags];
+
+        if (allTags.length > 0) {
           return (
-            <div className="flex flex-wrap gap-1 min-w-[150px]">
-              {legacyTags.slice(0, 3).map((tag, index) => (
-                <Badge key={index} variant="outline" className="text-xs">
-                  {tag}
-                </Badge>
-              ))}
-              {legacyTags.length > 3 && (
-                <Badge variant="outline" className="text-xs text-muted-foreground">
-                  +{legacyTags.length - 3}
-                </Badge>
-              )}
+            <div className="min-w-[150px]">
+              <TagList
+                tags={allTags}
+                variant="outline"
+                size="sm"
+                maxTags={3}
+                useInlineStyle={true}
+              />
             </div>
           );
         }

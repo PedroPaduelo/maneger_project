@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { DirectorySelector } from "@/components/directory-selector";
 import { MarkdownEditor } from "@/components/markdown-editor";
 import { useTags, useCreateTag } from "@/hooks/useTags";
+import { TagComponent, TagList } from "@/components/tag-component";
 
 interface CreateProjectDialogProps {
   onProjectCreated: () => void;
@@ -310,19 +311,23 @@ Desenvolver plataforma completa de e-commerce
                 <Label className="text-sm text-gray-600">Tags existentes:</Label>
                 <div className="flex flex-wrap gap-2">
                   {getAvailableTags().slice(0, 8).map((tag) => (
-                    <Badge
+                    <div
                       key={tag.id}
-                      variant="outline"
-                      className="cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors"
-                      style={{
-                        backgroundColor: tag.color ? `${tag.color}20` : undefined,
-                        borderColor: tag.color || undefined
-                      }}
+                      className="cursor-pointer"
                       onClick={() => addExistingTag(tag.name)}
                     >
-                      <Plus className="h-3 w-3 mr-1" />
-                      {tag.name}
-                    </Badge>
+                      <Badge
+                        variant="outline"
+                        className="flex items-center gap-1 text-xs cursor-pointer hover:opacity-80 transition-opacity"
+                        style={{
+                          backgroundColor: tag.color ? `${tag.color}20` : undefined,
+                          borderColor: tag.color || undefined
+                        }}
+                      >
+                        <Plus className="h-3 w-3" />
+                        {tag.name}
+                      </Badge>
+                    </div>
                   ))}
                   {getAvailableTags().length > 8 && (
                     <Badge variant="outline" className="text-gray-500">
@@ -365,14 +370,15 @@ Desenvolver plataforma completa de e-commerce
                   {formData.tags.map((tag, index) => {
                     // Find the tag object to get its color
                     const tagObject = existingTags.find(t => t.name === tag);
+                    const tagWithColor = tagObject || { name: tag, color: undefined };
                     return (
                       <Badge
                         key={index}
                         variant="outline"
                         className="flex items-center gap-1 text-xs"
                         style={{
-                          backgroundColor: tagObject?.color ? `${tagObject.color}20` : undefined,
-                          borderColor: tagObject?.color || undefined
+                          backgroundColor: tagWithColor.color ? `${tagWithColor.color}20` : undefined,
+                          borderColor: tagWithColor.color || undefined
                         }}
                       >
                         <Check className="h-3 w-3" />

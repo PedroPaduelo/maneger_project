@@ -45,6 +45,7 @@ import {
 } from 'lucide-react';
 import { useTagsWithCount, useCreateTag, useUpdateTag, useDeleteTag } from '@/hooks/useTags';
 import { TagWithCount } from '@/hooks/useTags';
+import { TagComponent } from '@/components/tag-component';
 
 // Color options for tags
 const TAG_COLORS = [
@@ -300,9 +301,10 @@ export default function TagsPage() {
                 </Select>
                 {createForm.color && (
                   <div className="mt-2">
-                    <Badge className={getTagColor(createForm.color)}>
-                      Preview: {createForm.name || 'Nome da Tag'}
-                    </Badge>
+                    <TagComponent
+                      tag={{ name: createForm.name || 'Nome da Tag', color: createForm.color } as TagWithCount}
+                      size="sm"
+                    />
                   </div>
                 )}
               </div>
@@ -466,9 +468,10 @@ export default function TagsPage() {
                 {filteredTags.map((tag) => (
                   <TableRow key={tag.id}>
                     <TableCell>
-                      <Badge className={getTagColor(tag.color)}>
-                        {tag.name}
-                      </Badge>
+                      <TagComponent
+                        tag={tag}
+                        size="sm"
+                      />
                     </TableCell>
                     <TableCell>
                       <span className="text-sm text-muted-foreground">
@@ -609,9 +612,10 @@ export default function TagsPage() {
               </Select>
               {editForm.color && (
                 <div className="mt-2">
-                  <Badge className={getTagColor(editForm.color)}>
-                    Preview: {editForm.name || 'Nome da Tag'}
-                  </Badge>
+                  <TagComponent
+                    tag={{ name: editForm.name || 'Nome da Tag', color: editForm.color } as TagWithCount}
+                    size="sm"
+                  />
                 </div>
               )}
             </div>

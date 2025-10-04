@@ -41,6 +41,7 @@ import { ViewToggle } from "@/components/view-toggle";
 import { useViewMode } from "@/hooks/use-view-mode";
 import { useRequirementViewMode } from "@/hooks/use-requirement-view-mode";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
+import { TagList } from "@/components/tag-component";
 
 export function ProjectDetails() {
   const params = useParams();
@@ -216,7 +217,10 @@ export function ProjectDetails() {
     );
   }
 
-  const tags = parseTags(project.tags);
+  // Get tags from both the old tags field and the new projectTags relationship
+  const legacyTags = parseTags(project.tags);
+  const projectTags = project.projectTags?.map(pt => pt.tag) || [];
+  const allTags = [...projectTags, ...legacyTags];
   const completedTasks = project.tasks.filter(t => t.status === "Concluída").length;
   const totalTasks = project.tasks.length;
 
@@ -313,23 +317,15 @@ export function ProjectDetails() {
                 </div>
               )}
 
-              {tags.length > 0 && (
+              {allTags.length > 0 && (
                 <div>
                   <h3 className="font-semibold mb-2">Tags</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {tags.map((tag, index) => (
-                      <Badge 
-                        key={index} 
-                        variant="outline"
-                        style={{ 
-                          backgroundColor: project.color ? `${project.color}20` : undefined,
-                          borderColor: project.color || undefined
-                        }}
-                      >
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
+                  <TagList
+                    tags={allTags}
+                    variant="outline"
+                    size="sm"
+                    useInlineStyle={true}
+                  />
                 </div>
               )}
             </CardContent>

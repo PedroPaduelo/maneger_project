@@ -5,15 +5,14 @@ import { db } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   try {
-    // Temporarily disable authentication for development
-    // const session = await getServerSession(authOptions);
-    // 
-    // if (!session?.user?.id) {
-    //   return NextResponse.json(
-    //     { error: "Unauthorized" },
-    //     { status: 401 }
-    //   );
-    // }
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
@@ -27,10 +26,9 @@ export async function GET(request: NextRequest) {
 
     // Build where clause
     const where: any = {};
-    // Remove userId filter for development
-    // if (session?.user?.id) {
-    //   where.userId = session.user.id;
-    // }
+    if (session?.user?.id) {
+      where.userId = session.user.id;
+    }
     
     if (search) {
       where.OR = [
@@ -115,15 +113,14 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Temporarily disable authentication for development
-    // const session = await getServerSession(authOptions);
-    // 
-    // if (!session?.user?.id) {
-    //   return NextResponse.json(
-    //     { error: "Unauthorized" },
-    //     { status: 401 }
-    //   );
-    // }
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
     const body = await request.json();
     
@@ -141,8 +138,7 @@ export async function POST(request: NextRequest) {
         tags: body.tags ? JSON.stringify(body.tags) : null,
         metadata: body.metadata,
         executionPath: body.executionPath,
-        // Remove userId for development
-        // userId: session.user.id
+        userId: session.user.id
       },
       include: {
         tasks: true,

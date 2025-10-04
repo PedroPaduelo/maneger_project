@@ -15,6 +15,7 @@ import { useUpdateProject } from "@/hooks";
 import { DirectorySelector } from "@/components/directory-selector";
 import { MarkdownEditor } from "@/components/markdown-editor";
 import { useTags, useCreateTag } from "@/hooks/useTags";
+import { TagComponent } from "@/components/tag-component";
 
 interface EditProjectDialogProps {
   project: Project;
@@ -237,15 +238,15 @@ export function EditProjectDialog({ project, onProjectUpdated, trigger }: EditPr
                   {getAvailableTags().slice(0, 8).map((tag) => (
                     <Badge
                       key={tag.id}
-                      variant="outline"
-                      className="cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                      variant="default"
+                      className="cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1"
                       style={{
                         backgroundColor: tag.color ? `${tag.color}20` : undefined,
                         borderColor: tag.color || undefined
                       }}
                       onClick={() => addExistingTag(tag.name)}
                     >
-                      <Plus className="h-3 w-3 mr-1" />
+                      <Plus className="h-3 w-3" />
                       {tag.name}
                     </Badge>
                   ))}
@@ -288,14 +289,15 @@ export function EditProjectDialog({ project, onProjectUpdated, trigger }: EditPr
                   {formData.tags.map((tag, index) => {
                     // Find the tag object to get its color
                     const tagObject = existingTags.find(t => t.name === tag);
+                    const tagWithColor = tagObject || { name: tag, color: undefined };
                     return (
                       <Badge
                         key={index}
                         variant="outline"
                         className="flex items-center gap-1 text-xs"
                         style={{
-                          backgroundColor: tagObject?.color ? `${tagObject.color}20` : undefined,
-                          borderColor: tagObject?.color || undefined
+                          backgroundColor: tagWithColor.color ? `${tagWithColor.color}20` : undefined,
+                          borderColor: tagWithColor.color || undefined
                         }}
                       >
                         <Check className="h-3 w-3" />
@@ -309,7 +311,7 @@ export function EditProjectDialog({ project, onProjectUpdated, trigger }: EditPr
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
-                      </Badge>
+                      </div>
                     );
                   })}
                 </div>

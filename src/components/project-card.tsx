@@ -27,6 +27,7 @@ import { useToggleFavorite } from "@/hooks";
 import { EditProjectDialog } from "@/components/edit-project-dialog";
 import { DeleteProjectDialog } from "@/components/delete-project-dialog";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
+import { TagList } from "@/components/tag-component";
 
 interface ProjectCardProps {
   project: Project;
@@ -207,32 +208,13 @@ function ProjectCardComponent({ project }: ProjectCardProps) {
         {/* Tags */}
         {allTags.length > 0 && (
           <div className="mb-4">
-            <div className="flex flex-wrap gap-1">
-              {allTags.slice(0, 3).map((tag, index) => {
-                // Handle both string tags and Tag objects
-                const tagName = typeof tag === 'string' ? tag : tag.name;
-                const tagColor = typeof tag === 'object' && tag.color ? tag.color : undefined;
-
-                return (
-                  <Badge
-                    key={typeof tag === 'string' ? `legacy-${index}` : tag.id}
-                    variant="outline"
-                    className="text-xs"
-                    style={{
-                      backgroundColor: tagColor ? `${tagColor}20` : project.color ? `${project.color}20` : undefined,
-                      borderColor: tagColor || project.color || undefined
-                    }}
-                  >
-                    {tagName}
-                  </Badge>
-                );
-              })}
-              {allTags.length > 3 && (
-                <Badge variant="outline" className="text-xs">
-                  +{allTags.length - 3}
-                </Badge>
-              )}
-            </div>
+            <TagList
+              tags={allTags}
+              variant="outline"
+              size="sm"
+              maxTags={3}
+              useInlineStyle={true}
+            />
           </div>
         )}
 
