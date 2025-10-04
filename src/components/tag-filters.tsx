@@ -92,7 +92,7 @@ export function TagFilters({
 
   if (error) {
     return (
-      <div className="flex items-center gap-2 text-sm text-red-600">
+      <div className="flex items-center gap-2 text-sm text-destructive">
         <TagIcon className="h-4 w-4" />
         Erro ao carregar tags
       </div>

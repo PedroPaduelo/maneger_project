@@ -126,9 +126,9 @@ export function ProjectDetails() {
       case "Concluída":
         return <CheckCircle className="h-4 w-4 text-blue-500" />;
       case "Cancelado":
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
+        return <AlertCircle className="h-4 w-4 text-destructive" />;
       default:
-        return <Circle className="h-4 w-4 text-gray-500" />;
+        return <Circle className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -184,7 +184,7 @@ export function ProjectDetails() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Acesso Restrito</h1>
+          <h1 className="text-2xl font-bold text-destructive mb-4">Acesso Restrito</h1>
           <p className="text-muted-foreground mb-4">Você precisa estar autenticado para acessar esta página.</p>
           <Button onClick={() => router.push("/auth/signin")}>Fazer Login</Button>
         </div>
@@ -207,7 +207,7 @@ export function ProjectDetails() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Erro</h1>
+          <h1 className="text-2xl font-bold text-destructive mb-4">Erro</h1>
           <p className="text-muted-foreground mb-4">{error || "Projeto não encontrado"}</p>
           <Button onClick={() => router.push("/")}>
             Voltar para Dashboard
@@ -538,7 +538,7 @@ export function ProjectDetails() {
                         <div className="absolute left-4 w-2 h-2 bg-blue-500 rounded-full transform -translate-x-1/2"></div>
                         <div className="ml-8">
                           <div className="flex items-center gap-2 mb-1">
-                            <Badge variant="outline" className="border-blue-500 text-blue-700">
+                            <Badge variant="outline" className="border-blue-500 text-blue-400">
                               Requisito
                             </Badge>
                             <Badge variant={requirement.priority === "Alta" ? "destructive" : requirement.priority === "Média" ? "default" : "secondary"}>
@@ -578,9 +578,9 @@ export function ProjectDetails() {
                         <div className="ml-8">
                           <div className="flex items-center gap-2 mb-1">
                             <Badge variant="outline" className={
-                              task.status === "Concluída" ? "border-green-500 text-green-700" :
-                              task.status === "Em Progresso" ? "border-blue-500 text-blue-700" :
-                              task.status === "Bloqueado" ? "border-red-500 text-red-700" : "border-yellow-500 text-yellow-700"
+                              task.status === "Concluída" ? "border-green-500 text-green-400" :
+                              task.status === "Em Progresso" ? "border-blue-500 text-blue-400" :
+                              task.status === "Bloqueado" ? "border-destructive text-destructive" : "border-yellow-500 text-yellow-400"
                             }>
                               Tarefa
                             </Badge>
@@ -639,7 +639,7 @@ export function ProjectDetails() {
                         <div className="absolute left-4 w-2 h-2 bg-purple-500 rounded-full transform -translate-x-1/2"></div>
                         <div className="ml-8">
                           <div className="flex items-center gap-2 mb-1">
-                            <Badge variant="outline" className="border-purple-500 text-purple-700">
+                            <Badge variant="outline" className="border-purple-500 text-purple-400">
                               Sumário Histórico
                             </Badge>
                             <span className="text-sm text-muted-foreground">
@@ -664,7 +664,7 @@ export function ProjectDetails() {
                       <div className="absolute left-4 w-2 h-2 bg-purple-500 rounded-full transform -translate-x-1/2"></div>
                       <div className="ml-8">
                         <div className="flex items-center gap-2 mb-1">
-                          <Badge variant="outline" className="border-purple-500 text-purple-700">
+                          <Badge variant="outline" className="border-purple-500 text-purple-400">
                             Última Atualização
                           </Badge>
                           <span className="text-sm text-muted-foreground">

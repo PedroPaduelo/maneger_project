@@ -28,7 +28,7 @@ export default function RequirementsPage() {
     return (
       <SidebarLayout title="Acesso Restrito" breadcrumbs={[{ label: "Erro" }]}>
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Acesso Restrito</h1>
+          <h1 className="text-2xl font-bold text-destructive mb-4">Acesso Restrito</h1>
           <p className="text-muted-foreground mb-4">Você precisa estar autenticado para acessar esta página.</p>
         </div>
       </SidebarLayout>
@@ -39,7 +39,7 @@ export default function RequirementsPage() {
     return (
       <SidebarLayout title="Erro" breadcrumbs={[{ label: "Erro" }]}>
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Erro</h1>
+          <h1 className="text-2xl font-bold text-destructive mb-4">Erro</h1>
           <p className="text-muted-foreground">
             {requirementsError.message || "Erro ao carregar os requisitos. Por favor, tente novamente."}
           </p>

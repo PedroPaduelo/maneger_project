@@ -118,7 +118,7 @@ export default function TagsPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Acesso Restrito</h1>
+          <h1 className="text-2xl font-bold text-destructive mb-4">Acesso Restrito</h1>
           <p className="text-muted-foreground mb-4">Você precisa estar autenticado para acessar esta página.</p>
           <Button onClick={() => window.location.href = "/auth/signin"}>Fazer Login</Button>
         </div>
@@ -541,7 +541,7 @@ export default function TagsPage() {
                               <AlertDialogDescription>
                                 Tem certeza que deseja excluir a tag "{tag.name}"?
                                 {tag._count.projectTags > 0 && (
-                                  <span className="text-red-600 block mt-2">
+                                  <span className="text-destructive block mt-2">
                                     Esta tag não pode ser excluída pois está sendo usada em {tag._count.projectTags} projeto{tag._count.projectTags !== 1 ? 's' : ''}.
                                   </span>
                                 )}

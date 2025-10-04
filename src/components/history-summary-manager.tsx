@@ -96,7 +96,7 @@ export function HistorySummaryManager({ projectId }: HistorySummaryManagerProps)
       <Card>
         <CardContent className="flex flex-col items-center justify-center p-6">
           <div className="text-center space-y-2">
-            <h3 className="text-lg font-medium text-red-600">Erro</h3>
+            <h3 className="text-lg font-medium text-destructive">Erro</h3>
             <p className="text-muted-foreground">{error}</p>
           </div>
         </CardContent>

@@ -69,7 +69,7 @@ function ProjectCardComponent({ project }: ProjectCardProps) {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "Ativo":
-        return <Circle className="h-4 w-4 text-green-500" />;
+        return <div className="w-2 h-2 bg-green-500 rounded-full"></div>;
       case "Pausado":
         return <Clock className="h-4 w-4 text-yellow-500" />;
       case "Concluída":
@@ -77,7 +77,7 @@ function ProjectCardComponent({ project }: ProjectCardProps) {
       case "Cancelado":
         return <AlertCircle className="h-4 w-4 text-red-500" />;
       default:
-        return <Circle className="h-4 w-4 text-gray-500" />;
+        return <div className="w-2 h-2 bg-gray-500 rounded-full"></div>;
     }
   };
 
@@ -123,81 +123,105 @@ function ProjectCardComponent({ project }: ProjectCardProps) {
   const allTags = [...projectTags, ...legacyTags];
 
   return (
-    <Card className="h-full flex flex-col hover:shadow-lg transition-shadow">
-      <CardHeader className="pb-3">
+    <Card className="h-full flex flex-col bg-card border-border text-card-foreground hover:shadow-lg transition-all duration-300 hover:border-muted-foreground/20">
+      <CardHeader className="pb-3 space-y-3">
+        {/* Cabeçalho com nome, ID e botões de ação */}
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <CardTitle className="text-lg font-semibold line-clamp-2">
+            <div className="flex items-center gap-3 mb-2">
+              <CardTitle className="text-lg font-semibold line-clamp-1">
                 {project.name}
               </CardTitle>
-              <Badge variant="secondary" className="text-xs font-mono">
+              <Badge variant="secondary" className="text-xs font-mono hover:bg-accent transition-colors">
                 #{project.id}
               </Badge>
             </div>
-            <CardDescription className="line-clamp-2 mt-1">
-              <div className="prose prose-sm max-w-none dark:prose-invert line-clamp-2">
-                {project.description ? (
-                  <MarkdownRenderer content={project.description || ""} />
-                ) : (
-                  <span className="text-muted-foreground italic">Nenhuma descrição fornecida</span>
-                )}
-              </div>
+            <CardDescription className="line-clamp-2">
+              {project.description || "Sem descrição"}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2 ml-2">
-            {project.isFavorite && (
-              <Star className="h-4 w-4 text-yellow-500 fill-current" />
-            )}
             <Button
               variant="ghost"
               size="sm"
               onClick={handleToggleFavorite}
-              className="h-8 w-8 p-0"
+              className="h-8 w-8 p-0 hover:bg-accent transition-colors"
+              title={project.isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
             >
-              <Star className="h-4 w-4" />
+              <Star className={`h-4 w-4 transition-colors ${
+                project.isFavorite
+                  ? 'text-yellow-500 fill-current hover:text-yellow-400'
+                  : 'text-muted-foreground hover:text-yellow-500 hover:fill-current'
+              }`} />
             </Button>
             <EditProjectDialog project={project} onProjectUpdated={handleProjectUpdated} />
             <DeleteProjectDialog project={project} onProjectDeleted={handleProjectDeleted} />
           </div>
         </div>
-        
-        <div className="flex items-center gap-2 mt-3">
-          {getStatusIcon(project.status)}
-          <Badge variant="outline" className="text-xs">
-            {project.status}
-          </Badge>
-          <Badge variant={getPriorityColor(project.priority)} className="text-xs">
+
+        {/* Status e Prioridade */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
+            {getStatusIcon(project.status)}
+            <span className="text-sm text-green-500">{project.status}</span>
+          </div>
+          <Badge
+            variant="secondary"
+            className={`text-xs border transition-colors hover:scale-105 ${
+              project.priority === 'Alta'
+                ? 'bg-destructive/20 text-destructive border-destructive/50 hover:bg-destructive/30'
+                : project.priority === 'Média'
+                ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/50 hover:bg-yellow-500/30'
+                : 'bg-green-500/20 text-green-300 border-green-500/50 hover:bg-green-500/30'
+            }`}
+          >
             {project.priority}
           </Badge>
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col">
-        {/* Progress */}
-        <div className="space-y-2 mb-4">
+      <CardContent className="flex-1 flex flex-col space-y-4">
+        {/* Progresso */}
+        <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Progresso</span>
             <span className="font-medium">{project.progress}%</span>
           </div>
-          <Progress value={project.progress} className="h-2" />
+          <div className="w-full bg-muted rounded-full h-2">
+            <div
+              className="bg-primary h-2 rounded-full transition-all duration-300 hover:bg-primary/80"
+              style={{ width: `${project.progress || 0}%` }}
+            />
+          </div>
         </div>
 
-        {/* Stack/Tech */}
+        {/* Tecnologias */}
         {project.stack && (
-          <div className="mb-4">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <GitBranch className="h-4 w-4" />
               <span>Tecnologias</span>
             </div>
             <div className="flex flex-wrap gap-1">
               {project.stack.split(',').slice(0, 3).map((tech, index) => (
-                <Badge key={index} variant="secondary" className="text-xs">
+                <Badge
+                  key={index}
+                  variant="secondary"
+                  className={`text-xs border transition-colors hover:scale-105 ${
+                    tech.trim().toLowerCase() === 'react'
+                      ? 'bg-blue-500/20 text-blue-300 border-blue-500/50 hover:bg-blue-500/30'
+                      : tech.trim().toLowerCase() === 'typescript'
+                      ? 'bg-purple-500/20 text-purple-300 border-purple-500/50 hover:bg-purple-500/30'
+                      : tech.trim().toLowerCase() === 'next.js'
+                      ? 'bg-muted text-muted-foreground border-border hover:bg-accent'
+                      : 'bg-muted text-muted-foreground border-border hover:bg-accent'
+                  }`}
+                >
                   {tech.trim()}
                 </Badge>
               ))}
               {project.stack.split(',').length > 3 && (
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-xs hover:bg-accent transition-colors">
                   +{project.stack.split(',').length - 3}
                 </Badge>
               )}
@@ -207,7 +231,7 @@ function ProjectCardComponent({ project }: ProjectCardProps) {
 
         {/* Tags */}
         {allTags.length > 0 && (
-          <div className="mb-4">
+          <div className="space-y-2">
             <TagList
               tags={allTags}
               size="sm"
@@ -216,9 +240,12 @@ function ProjectCardComponent({ project }: ProjectCardProps) {
           </div>
         )}
 
-        {/* Footer */}
-        <div className="mt-auto pt-4 border-t">
-          <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
+        {/* Espaço flexível */}
+        <div className="flex-1"></div>
+
+        {/* Footer com data e equipe */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
             <div className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
               <span>
@@ -230,10 +257,10 @@ function ProjectCardComponent({ project }: ProjectCardProps) {
               <span>Equipe</span>
             </div>
           </div>
-          
-          <Button 
+
+          <Button
             onClick={handleViewDetails}
-            className="w-full"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-all duration-300 hover:scale-[1.02] hover:shadow-lg"
             size="sm"
           >
             Ver Detalhes

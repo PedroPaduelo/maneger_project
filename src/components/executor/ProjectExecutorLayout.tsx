@@ -33,19 +33,19 @@ export function ProjectExecutorLayout({
             </div>
             <div className="flex items-center gap-2">
               {executionStatus === 'running' && (
-                <div className="flex items-center gap-2 text-sm text-blue-600">
+                <div className="flex items-center gap-2 text-sm text-blue-500">
                   <div className="h-2 w-2 animate-pulse rounded-full bg-blue-600" />
                   Running
                 </div>
               )}
               {executionStatus === 'completed' && (
-                <div className="flex items-center gap-2 text-sm text-green-600">
+                <div className="flex items-center gap-2 text-sm text-green-500">
                   <div className="h-2 w-2 rounded-full bg-green-600" />
                   Completed
                 </div>
               )}
               {executionStatus === 'error' && (
-                <div className="flex items-center gap-2 text-sm text-red-600">
+                <div className="flex items-center gap-2 text-sm text-destructive">
                   <div className="h-2 w-2 rounded-full bg-red-600" />
                   Error
                 </div>

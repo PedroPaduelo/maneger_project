@@ -58,7 +58,7 @@ export function ExecutionProgress({ progress, stats }: ExecutionProgressProps) {
           )}
           {progress.status === 'completed' && (
             <Badge variant="outline" className="gap-1">
-              <CheckCircle className="h-3 w-3 text-green-600" />
+              <CheckCircle className="h-3 w-3 text-green-500" />
               Concluído
             </Badge>
           )}
@@ -80,7 +80,7 @@ export function ExecutionProgress({ progress, stats }: ExecutionProgressProps) {
         {progress.currentTask && (
           <div className="space-y-2 rounded-lg border bg-muted/50 p-4">
             <div className="flex items-center gap-2 text-sm font-medium">
-              <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+              <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
               Task Atual
             </div>
             <div className="space-y-1">
@@ -100,14 +100,14 @@ export function ExecutionProgress({ progress, stats }: ExecutionProgressProps) {
                 <CheckCircle className="h-3 w-3" />
                 Sucesso
               </div>
-              <p className="text-2xl font-bold text-green-600">{stats.successful}</p>
+              <p className="text-2xl font-bold text-green-500">{stats.successful}</p>
             </div>
             <div className="space-y-1">
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <XCircle className="h-3 w-3" />
                 Falhas
               </div>
-              <p className="text-2xl font-bold text-red-600">{stats.failed}</p>
+              <p className="text-2xl font-bold text-destructive">{stats.failed}</p>
             </div>
             <div className="space-y-1">
               <div className="flex items-center gap-1 text-xs text-muted-foreground">

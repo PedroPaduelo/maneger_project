@@ -62,14 +62,14 @@ export function ControlPanel({
       case 'completed':
         return (
           <Badge variant="outline" className="gap-1">
-            <CheckCircle className="h-3 w-3 text-green-600" />
+            <CheckCircle className="h-3 w-3 text-green-500" />
             Concluído
           </Badge>
         );
       case 'error':
         return (
           <Badge variant="outline" className="gap-1">
-            <XCircle className="h-3 w-3 text-red-600" />
+            <XCircle className="h-3 w-3 text-destructive" />
             Erro
           </Badge>
         );

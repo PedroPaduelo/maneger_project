@@ -66,11 +66,11 @@ export function ProjectHeader({
   const getStatusIcon = () => {
     switch (connectionStatus) {
       case 'connected':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
       case 'disconnected':
-        return <XCircle className="h-4 w-4 text-red-600" />;
+        return <XCircle className="h-4 w-4 text-destructive" />;
       case 'checking':
-        return <Loader2 className="h-4 w-4 animate-spin text-blue-600" />;
+        return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />;
       default:
         return <AlertCircle className="h-4 w-4 text-gray-400" />;
     }

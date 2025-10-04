@@ -60,7 +60,7 @@ function SettingsPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Acesso Restrito</h1>
+          <h1 className="text-2xl font-bold text-destructive mb-4">Acesso Restrito</h1>
           <p className="text-muted-foreground mb-4">Você precisa estar autenticado para acessar esta página.</p>
           <Button onClick={() => window.location.href = "/auth/signin"}>Fazer Login</Button>
         </div>
@@ -267,7 +267,7 @@ function SettingsPage() {
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Status da Conta</span>
-                  <Badge variant="outline" className="text-green-600 border-green-600">
+                  <Badge variant="outline" className="text-green-500 border-green-600">
                     Ativo
                   </Badge>
                 </div>
@@ -529,7 +529,7 @@ function SettingsPage() {
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-green-100 rounded-lg">
-                      <Monitor className="h-5 w-5 text-green-600" />
+                      <Monitor className="h-5 w-5 text-green-500" />
                     </div>
                     <div>
                       <p className="font-medium">Navegador Atual</p>
@@ -539,7 +539,7 @@ function SettingsPage() {
                       </p>
                     </div>
                   </div>
-                  <Badge variant="outline" className="text-green-600 border-green-600">
+                  <Badge variant="outline" className="text-green-500 border-green-600">
                     Ativo agora
                   </Badge>
                 </div>

@@ -144,9 +144,9 @@ export function PerformanceMetrics({ projects, tasks, requirements }: Performanc
   };
 
   const getHealthColor = (score: number) => {
-    if (score >= 80) return "text-green-600";
+    if (score >= 80) return "text-green-500";
     if (score >= 60) return "text-yellow-600";
-    return "text-red-600";
+    return "text-destructive";
   };
 
   const getHealthBadge = (score: number) => {
@@ -313,7 +313,7 @@ export function PerformanceMetrics({ projects, tasks, requirements }: Performanc
           <div className="grid gap-6 md:grid-cols-3">
             <div className="space-y-4">
               <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600">
+                <div className="text-3xl font-bold text-blue-500">
                   {quality.highPriorityCompletionRate}%
                 </div>
                 <div className="text-sm text-muted-foreground">
@@ -328,7 +328,7 @@ export function PerformanceMetrics({ projects, tasks, requirements }: Performanc
 
             <div className="space-y-4">
               <div className="text-center">
-                <div className="text-3xl font-bold text-green-600">
+                <div className="text-3xl font-bold text-green-500">
                   {quality.onTimeDeliveryRate}%
                 </div>
                 <div className="text-sm text-muted-foreground">

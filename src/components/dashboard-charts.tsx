@@ -289,7 +289,7 @@ export function DashboardCharts({ projects, tasks, requirements }: DashboardChar
         {/* Recent Achievements */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-green-600">
+            <CardTitle className="flex items-center gap-2 text-green-500">
               <CheckCircle className="h-5 w-5" />
               Conquistas Recentes
             </CardTitle>

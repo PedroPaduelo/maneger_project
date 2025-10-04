@@ -25,11 +25,11 @@ export interface LogExportOptions {
 }
 
 export const LogLevelColors: Record<LogLevel, string> = {
-  info: 'text-blue-400',
-  success: 'text-green-400',
-  warning: 'text-yellow-400',
-  error: 'text-red-400',
-  debug: 'text-gray-400',
+  info: 'text-blue-500',
+  success: 'text-green-500',
+  warning: 'text-yellow-500',
+  error: 'text-destructive',
+  debug: 'text-muted-foreground',
 };
 
 export const LogLevelIcons: Record<LogLevel, string> = {

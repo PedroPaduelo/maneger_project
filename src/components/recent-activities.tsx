@@ -217,13 +217,13 @@ export function RecentActivities({
 
   const getActivityColor = (type: string, action: string) => {
     if (action === 'completed') {
-      return "text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/30 border-green-200 dark:border-green-800";
+      return "text-green-500 bg-green-500/20 border-green-500/50";
     } else if (action === 'created') {
-      return "text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800";
+      return "text-blue-500 bg-blue-500/20 border-blue-500/50";
     } else if (action === 'updated') {
-      return "text-orange-700 dark:text-orange-300 bg-orange-100 dark:bg-orange-900/30 border-orange-200 dark:border-orange-800";
+      return "text-orange-500 bg-orange-500/20 border-orange-500/50";
     }
-    return "text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700";
+    return "text-muted-foreground bg-muted border-border";
   };
 
   const getStatusBadge = (status?: string, priority?: string) => {

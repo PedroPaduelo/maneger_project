@@ -40,7 +40,7 @@ export function TasksTable({
     if (statusLower.includes('conclu') || statusLower.includes('complete')) {
       return (
         <Badge variant="outline" className="gap-1">
-          <CheckCircle className="h-3 w-3 text-green-600" />
+          <CheckCircle className="h-3 w-3 text-green-500" />
           Concluída
         </Badge>
       );
@@ -49,7 +49,7 @@ export function TasksTable({
     if (statusLower.includes('executando') || statusLower.includes('running') || statusLower.includes('andamento')) {
       return (
         <Badge variant="outline" className="gap-1">
-          <Loader2 className="h-3 w-3 animate-spin text-blue-600" />
+          <Loader2 className="h-3 w-3 animate-spin text-blue-500" />
           Executando
         </Badge>
       );
@@ -58,7 +58,7 @@ export function TasksTable({
     if (statusLower.includes('erro') || statusLower.includes('error') || statusLower.includes('falha')) {
       return (
         <Badge variant="outline" className="gap-1">
-          <XCircle className="h-3 w-3 text-red-600" />
+          <XCircle className="h-3 w-3 text-destructive" />
           Erro
         </Badge>
       );

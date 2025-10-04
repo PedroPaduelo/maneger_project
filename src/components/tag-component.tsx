@@ -31,32 +31,32 @@ const useThemeColors = () => {
 
 // Color options for tags
 const TAG_COLORS = [
-  { value: 'red', label: 'Vermelho', preview: 'bg-red-100 text-red-800 border-red-200' },
-  { value: 'blue', label: 'Azul', preview: 'bg-blue-100 text-blue-800 border-blue-200' },
-  { value: 'green', label: 'Verde', preview: 'bg-green-100 text-green-800 border-green-200' },
-  { value: 'yellow', label: 'Amarelo', preview: 'bg-yellow-100 text-yellow-800 border-yellow-200' },
-  { value: 'purple', label: 'Roxo', preview: 'bg-purple-100 text-purple-800 border-purple-200' },
-  { value: 'pink', label: 'Rosa', preview: 'bg-pink-100 text-pink-800 border-pink-200' },
-  { value: 'orange', label: 'Laranja', preview: 'bg-orange-100 text-orange-800 border-orange-200' },
-  { value: 'teal', label: 'Ciano', preview: 'bg-teal-100 text-teal-800 border-teal-200' },
+  { value: 'red', label: 'Vermelho', preview: 'bg-red-500/20 text-red-400 border-red-500/50' },
+  { value: 'blue', label: 'Azul', preview: 'bg-blue-500/20 text-blue-400 border-blue-500/50' },
+  { value: 'green', label: 'Verde', preview: 'bg-green-500/20 text-green-400 border-green-500/50' },
+  { value: 'yellow', label: 'Amarelo', preview: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50' },
+  { value: 'purple', label: 'Roxo', preview: 'bg-purple-500/20 text-purple-400 border-purple-500/50' },
+  { value: 'pink', label: 'Rosa', preview: 'bg-pink-500/20 text-pink-400 border-pink-500/50' },
+  { value: 'orange', label: 'Laranja', preview: 'bg-orange-500/20 text-orange-400 border-orange-500/50' },
+  { value: 'teal', label: 'Ciano', preview: 'bg-teal-500/20 text-teal-400 border-teal-500/50' },
 ];
 
 // Get tag color styling (translucent like forms)
 const getTagColor = (color?: string) => {
-  if (!color) return "bg-gray-100 text-gray-800 border-gray-200";
+  if (!color) return "bg-muted text-muted-foreground border-border";
 
   const colorMap: Record<string, string> = {
-    red: "bg-red-100 text-red-800 border-red-200",
-    blue: "bg-blue-100 text-blue-800 border-blue-200",
-    green: "bg-green-100 text-green-800 border-green-200",
-    yellow: "bg-yellow-100 text-yellow-800 border-yellow-200",
-    purple: "bg-purple-100 text-purple-800 border-purple-200",
-    pink: "bg-pink-100 text-pink-800 border-pink-200",
-    orange: "bg-orange-100 text-orange-800 border-orange-200",
-    teal: "bg-teal-100 text-teal-800 border-teal-200",
+    red: "bg-red-500/20 text-red-400 border-red-500/50",
+    blue: "bg-blue-500/20 text-blue-400 border-blue-500/50",
+    green: "bg-green-500/20 text-green-400 border-green-500/50",
+    yellow: "bg-yellow-500/20 text-yellow-400 border-yellow-500/50",
+    purple: "bg-purple-500/20 text-purple-400 border-purple-500/50",
+    pink: "bg-pink-500/20 text-pink-400 border-pink-500/50",
+    orange: "bg-orange-500/20 text-orange-400 border-orange-500/50",
+    teal: "bg-teal-500/20 text-teal-400 border-teal-500/50",
   };
 
-  return colorMap[color] || "bg-gray-100 text-gray-800 border-gray-200";
+  return colorMap[color] || "bg-muted text-muted-foreground border-border";
 };
 
 // Get theme-aware tag colors

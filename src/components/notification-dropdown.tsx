@@ -116,16 +116,16 @@ export function NotificationDropdown({ userId = "system" }: NotificationDropdown
 
   const getNotificationIcon = (type: string, priority: string) => {
     if (priority === "Alta") {
-      return <AlertTriangle className="h-4 w-4 text-red-500" />;
+      return <AlertTriangle className="h-4 w-4 text-destructive" />;
     }
-    
+
     switch (type) {
       case "success":
         return <CheckCircle className="h-4 w-4 text-green-500" />;
       case "warning":
         return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
       case "error":
-        return <AlertTriangle className="h-4 w-4 text-red-500" />;
+        return <AlertTriangle className="h-4 w-4 text-destructive" />;
       default:
         return <Info className="h-4 w-4 text-blue-500" />;
     }

@@ -181,7 +181,7 @@ export function ExecutionLog({
               disabled={filteredLogs.length === 0}
             >
               {copied ? (
-                <Check className="h-4 w-4 text-green-600" />
+                <Check className="h-4 w-4 text-green-500" />
               ) : (
                 <Copy className="h-4 w-4" />
               )}
@@ -261,7 +261,7 @@ export function ExecutionLog({
           </div>
           <div>
             {autoScroll && isRunning && (
-              <span className="text-blue-600">Auto-scroll ativo</span>
+              <span className="text-blue-500">Auto-scroll ativo</span>
             )}
           </div>
         </div>

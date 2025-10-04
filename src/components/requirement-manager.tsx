@@ -240,7 +240,7 @@ export function RequirementManager() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Erro</h1>
+          <h1 className="text-2xl font-bold text-destructive mb-4">Erro</h1>
           <p className="text-muted-foreground mb-4">{error || "Requisito não encontrado"}</p>
           <Button onClick={() => router.back()}>
             Voltar
@@ -490,7 +490,7 @@ export function RequirementManager() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleUnlinkTask(rt.id)}
-                          className="text-red-500 hover:text-red-700"
+                          className="text-destructive hover:text-destructive/80"
                         >
                           <Unlink className="h-4 w-4" />
                         </Button>
