@@ -27,6 +27,7 @@ import { ptBR } from "date-fns/locale";
 import { useRouter } from "next/navigation";
 import { EditRequirementDialog } from "@/components/edit-requirement-dialog";
 import { RequirementFilters } from "@/components/requirement-filters";
+import { MarkdownRenderer } from "@/components/markdown-renderer";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -54,6 +55,24 @@ export function RequirementTable({ requirements, availableCategories }: Requirem
   const [typeFilter, setTypeFilter] = React.useState<string[]>([]);
   const [priorityFilter, setPriorityFilter] = React.useState<string[]>([]);
   const [categoryFilter, setCategoryFilter] = React.useState("all");
+
+  // Função para extrair texto plano do markdown para a tabela
+  const getPlainTextFromMarkdown = (markdown: string) => {
+    return markdown
+      .replace(/^#+\s/gm, '') // Remove headers
+      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold formatting but keep text
+      .replace(/\*(.*?)\*/g, '$1') // Remove italic formatting but keep text
+      .replace(/`(.*?)`/g, '$1') // Remove inline code formatting but keep text
+      .replace(/^- \[ \] /gm, '▢ ') // Convert checkboxes
+      .replace(/^- \[x\] /gm, '☑ ') // Convert checked boxes
+      .replace(/^[-*+]\s/gm, '• ') // Convert list items
+      .replace(/^\d+\.\s/gm, '• ') // Convert numbered lists
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Remove markdown links but keep text
+      .replace(/```[\s\S]*?```/g, '[Código]') // Replace code blocks
+      .split('\n')
+      .filter(line => line.trim())
+      .join(' ');
+  };
 
   // Apply filters to the data
   const filteredData = React.useMemo(() => {
@@ -176,7 +195,7 @@ export function RequirementTable({ requirements, availableCategories }: Requirem
             </div>
             {requirement.description && (
               <div className="text-sm text-muted-foreground line-clamp-2">
-                {truncateText(requirement.description, 120)}
+                {truncateText(getPlainTextFromMarkdown(requirement.description), 120)}
               </div>
             )}
             {requirement.category && (

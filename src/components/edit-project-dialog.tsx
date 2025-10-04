@@ -11,7 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { Project } from "@/lib/types";
 import { Edit, Save, X, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useUpdateProject } from "@/hooks";
 import { DirectorySelector } from "@/components/directory-selector";
+import { MarkdownEditor } from "@/components/markdown-editor";
 
 interface EditProjectDialogProps {
   project: Project;
@@ -21,8 +23,8 @@ interface EditProjectDialogProps {
 
 export function EditProjectDialog({ project, onProjectUpdated, trigger }: EditProjectDialogProps) {
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const updateProject = useUpdateProject();
   
   const parseTags = (tags: string | null) => {
     if (!tags) return [];
@@ -35,7 +37,7 @@ export function EditProjectDialog({ project, onProjectUpdated, trigger }: EditPr
 
   const [formData, setFormData] = useState({
     name: project.name,
-    description: project.description,
+    description: project.description || "",
     stack: project.stack || "",
     notes: project.notes || "",
     status: project.status,
@@ -66,42 +68,19 @@ export function EditProjectDialog({ project, onProjectUpdated, trigger }: EditPr
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
 
-    try {
-      const response = await fetch(`/api/projects/${project.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...formData,
-          tags: formData.tags.length > 0 ? JSON.stringify(formData.tags) : null
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update project");
+    updateProject.mutate({
+      id: project.id,
+      ...formData,
+      tags: formData.tags.length > 0 ? JSON.stringify(formData.tags) : null
+    }, {
+      onSuccess: () => {
+        setOpen(false);
+        onProjectUpdated();
       }
-
-      toast({
-        title: "Projeto atualizado",
-        description: "O projeto foi atualizado com sucesso.",
-      });
-
-      setOpen(false);
-      onProjectUpdated();
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível atualizar o projeto.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   return (
@@ -114,7 +93,7 @@ export function EditProjectDialog({ project, onProjectUpdated, trigger }: EditPr
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[800px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar Projeto</DialogTitle>
           <DialogDescription>
@@ -135,14 +114,12 @@ export function EditProjectDialog({ project, onProjectUpdated, trigger }: EditPr
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
-            <Textarea
-              id="description"
+            <MarkdownEditor
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Descrição do projeto"
-              rows={3}
-              required
+              onChange={(value) => setFormData({ ...formData, description: value })}
+              label="Descrição"
+              description="Descreva o projeto em detalhes usando markdown para melhor formatação."
+              placeholder="Descreva o projeto usando markdown..."
             />
           </div>
 
@@ -157,13 +134,12 @@ export function EditProjectDialog({ project, onProjectUpdated, trigger }: EditPr
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Observações</Label>
-            <Textarea
-              id="notes"
+            <MarkdownEditor
               value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Observações sobre o projeto"
-              rows={2}
+              onChange={(value) => setFormData({ ...formData, notes: value })}
+              label="Observações"
+              description="Observações adicionais sobre o projeto usando markdown para melhor organização."
+              placeholder="Adicione observações usando markdown..."
             />
           </div>
 
@@ -277,12 +253,12 @@ export function EditProjectDialog({ project, onProjectUpdated, trigger }: EditPr
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={updateProject.isPending}>
               <X className="h-4 w-4 mr-2" />
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? (
+            <Button type="submit" disabled={updateProject.isPending}>
+              {updateProject.isPending ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
                   Salvando...

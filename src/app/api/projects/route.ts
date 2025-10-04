@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search") || "";
     const status = searchParams.get("status") || "";
     const priority = searchParams.get("priority") || "";
+    const tagsParam = searchParams.get("tags") || "";
 
     const skip = (page - 1) * limit;
 
@@ -44,6 +45,19 @@ export async function GET(request: NextRequest) {
 
     if (priority && priority !== "all") {
       where.priority = priority;
+    }
+
+    if (tagsParam) {
+      const tagIds = tagsParam.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+      if (tagIds.length > 0) {
+        where.projectTags = {
+          some: {
+            tagId: {
+              in: tagIds
+            }
+          }
+        };
+      }
     }
 
     // Get projects with pagination

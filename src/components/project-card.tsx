@@ -1,17 +1,18 @@
 "use client";
 
+import { memo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Project } from "@/lib/types";
-import { 
-  Calendar, 
-  Clock, 
-  Star, 
-  MoreVertical, 
-  Users, 
-  GitBranch, 
+import {
+  Calendar,
+  Clock,
+  Star,
+  MoreVertical,
+  Users,
+  GitBranch,
   CheckCircle,
   AlertCircle,
   Circle,
@@ -22,16 +23,19 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { useToggleFavorite } from "@/hooks";
 import { EditProjectDialog } from "@/components/edit-project-dialog";
 import { DeleteProjectDialog } from "@/components/delete-project-dialog";
+import { MarkdownRenderer } from "@/components/markdown-renderer";
 
 interface ProjectCardProps {
   project: Project;
 }
 
-export function ProjectCard({ project }: ProjectCardProps) {
+function ProjectCardComponent({ project }: ProjectCardProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const toggleFavorite = useToggleFavorite();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -80,46 +84,27 @@ export function ProjectCard({ project }: ProjectCardProps) {
     router.push(`/project/${project.id}`);
   };
 
-  const handleToggleFavorite = async () => {
-    try {
-      const response = await fetch(`/api/projects/${project.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...project,
-          isFavorite: !project.isFavorite
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update project");
-      }
-
-      toast({
-        title: "Sucesso",
-        description: `Projeto ${!project.isFavorite ? "adicionado aos" : "removido dos"} favoritos.`,
-      });
-
-      // Refresh the page to show updated data
-      window.location.reload();
-    } catch (error) {
-      console.error("Error toggling favorite:", error);
-      toast({
-        title: "Erro",
-        description: "Falha ao atualizar favorito. Tente novamente.",
-        variant: "destructive",
-      });
-    }
+  const handleToggleFavorite = () => {
+    toggleFavorite.mutate({
+      id: project.id,
+      isFavorite: project.isFavorite
+    });
   };
 
   const handleProjectUpdated = () => {
-    window.location.reload();
+    // Os dados serão atualizados automaticamente pelo TanStack Query
+    toast({
+      title: "Sucesso",
+      description: "Projeto atualizado com sucesso.",
+    });
   };
 
   const handleProjectDeleted = () => {
-    window.location.reload();
+    // Os dados serão atualizados automaticamente pelo TanStack Query
+    toast({
+      title: "Sucesso",
+      description: "Projeto excluído com sucesso.",
+    });
   };
 
   const parseTags = (tags: string | null) => {
@@ -131,7 +116,10 @@ export function ProjectCard({ project }: ProjectCardProps) {
     }
   };
 
-  const tags = parseTags(project.tags);
+  // Get tags from both the old tags field and the new projectTags relationship
+  const legacyTags = parseTags(project.tags);
+  const projectTags = project.projectTags?.map(pt => pt.tag) || [];
+  const allTags = [...projectTags, ...legacyTags];
 
   return (
     <Card className="h-full flex flex-col hover:shadow-lg transition-shadow">
@@ -147,7 +135,13 @@ export function ProjectCard({ project }: ProjectCardProps) {
               </Badge>
             </div>
             <CardDescription className="line-clamp-2 mt-1">
-              {project.description}
+              <div className="prose prose-sm max-w-none dark:prose-invert line-clamp-2">
+                {project.description ? (
+                  <MarkdownRenderer content={project.description || ""} />
+                ) : (
+                  <span className="text-muted-foreground italic">Nenhuma descrição fornecida</span>
+                )}
+              </div>
             </CardDescription>
           </div>
           <div className="flex items-center gap-2 ml-2">
@@ -211,25 +205,31 @@ export function ProjectCard({ project }: ProjectCardProps) {
         )}
 
         {/* Tags */}
-        {tags.length > 0 && (
+        {allTags.length > 0 && (
           <div className="mb-4">
             <div className="flex flex-wrap gap-1">
-              {tags.slice(0, 3).map((tag, index) => (
-                <Badge 
-                  key={index} 
-                  variant="outline" 
-                  className="text-xs"
-                  style={{ 
-                    backgroundColor: project.color ? `${project.color}20` : undefined,
-                    borderColor: project.color || undefined
-                  }}
-                >
-                  {tag}
-                </Badge>
-              ))}
-              {tags.length > 3 && (
+              {allTags.slice(0, 3).map((tag, index) => {
+                // Handle both string tags and Tag objects
+                const tagName = typeof tag === 'string' ? tag : tag.name;
+                const tagColor = typeof tag === 'object' && tag.color ? tag.color : undefined;
+
+                return (
+                  <Badge
+                    key={typeof tag === 'string' ? `legacy-${index}` : tag.id}
+                    variant="outline"
+                    className="text-xs"
+                    style={{
+                      backgroundColor: tagColor ? `${tagColor}20` : project.color ? `${project.color}20` : undefined,
+                      borderColor: tagColor || project.color || undefined
+                    }}
+                  >
+                    {tagName}
+                  </Badge>
+                );
+              })}
+              {allTags.length > 3 && (
                 <Badge variant="outline" className="text-xs">
-                  +{tags.length - 3}
+                  +{allTags.length - 3}
                 </Badge>
               )}
             </div>
@@ -263,3 +263,6 @@ export function ProjectCard({ project }: ProjectCardProps) {
     </Card>
   );
 }
+
+// Exportar componente memoizado para evitar re-renders desnecessários
+export const ProjectCard = memo(ProjectCardComponent);

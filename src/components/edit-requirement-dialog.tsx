@@ -4,13 +4,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Requirement } from "@/lib/types";
 import { Edit, Save, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { MarkdownEditor } from "@/components/markdown-editor";
 
 interface EditRequirementDialogProps {
   requirement: Requirement;
@@ -72,7 +72,7 @@ export function EditRequirementDialog({ requirement, onRequirementUpdated }: Edi
           <Edit className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[525px]">
+      <DialogContent className="sm:max-w-[800px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar Requisito</DialogTitle>
           <DialogDescription>
@@ -93,14 +93,12 @@ export function EditRequirementDialog({ requirement, onRequirementUpdated }: Edi
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
-            <Textarea
-              id="description"
+            <MarkdownEditor
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Descrição detalhada do requisito"
-              rows={3}
-              required
+              onChange={(value) => setFormData({ ...formData, description: value })}
+              label="Descrição"
+              description="Descreva o requisito em detalhes usando markdown para melhor formatação."
+              placeholder="Estruture seu requisito com markdown para melhor clareza..."
             />
           </div>
 

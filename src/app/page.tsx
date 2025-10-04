@@ -1,65 +1,44 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { Dashboard } from "@/components/dashboard";
+import { useProjects, useTasksQuery, useRequirements } from "@/hooks";
 import { Project, Task, Requirement, HistorySummary } from "@/lib/types";
 
 export default function Home() {
   const { data: session, status } = useSession();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [requirements, setRequirements] = useState<Requirement[]>([]);
-  const [historySummaries, setHistorySummaries] = useState<HistorySummary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // Temporarily disable authentication requirement for development
-    fetchData();
-    // if (status === "authenticated") {
-    //   fetchData();
-    // } else if (status === "unauthenticated") {
-    //   // Redirect to sign in
-    //   window.location.href = "/auth/signin";
-    // }
-  }, [status]);
+  // Usar hooks de queries para buscar dados com cache e otimização
+  const {
+    data: projects = [],
+    isLoading: projectsLoading,
+    error: projectsError
+  } = useProjects();
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      
-      // Fetch all data in parallel
-      const [projectsRes, tasksRes, requirementsRes] = await Promise.all([
-        fetch("/api/projects"),
-        fetch("/api/tasks"),
-        fetch("/api/requirements")
-      ]);
+  const {
+    data: tasks = [],
+    isLoading: tasksLoading,
+    error: tasksError
+  } = useTasksQuery();
 
-      if (!projectsRes.ok || !tasksRes.ok || !requirementsRes.ok) {
-        throw new Error("Failed to fetch data");
-      }
+  const {
+    data: requirements = [],
+    isLoading: requirementsLoading,
+    error: requirementsError
+  } = useRequirements();
 
-      const projectsData = await projectsRes.json();
-      const tasksData = await tasksRes.json();
-      const requirementsData = await requirementsRes.json();
+  // Extrair history summaries dos projetos
+  const historySummaries: HistorySummary[] = projects.flatMap((project: any) =>
+    project.historySummaries || []
+  );
 
-      setProjects(projectsData.projects || []);
-      setTasks(tasksData || []);
-      setRequirements(requirementsData || []);
-      
-      // Extract history summaries from projects
-      const allHistorySummaries = projectsData.projects?.flatMap((project: any) => project.historySummaries || []) || [];
-      setHistorySummaries(allHistorySummaries);
-    } catch (err) {
-      console.error("Error fetching data:", err);
-      setError("Erro ao carregar os dados. Por favor, tente novamente.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Loading state combinado
+  const isLoading = projectsLoading || tasksLoading || requirementsLoading;
 
-  if (status === "loading" || loading) {
+  // Error state combinado
+  const error = projectsError || tasksError || requirementsError;
+
+  if (status === "loading" || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -75,13 +54,9 @@ export default function Home() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600 mb-4">Erro</h1>
-          <p className="text-muted-foreground mb-4">{error}</p>
-          <button
-            onClick={fetchData}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-          >
-            Tentar novamente
-          </button>
+          <p className="text-muted-foreground mb-4">
+            {error.message || "Erro ao carregar os dados. Por favor, tente novamente."}
+          </p>
         </div>
       </div>
     );
@@ -89,7 +64,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Dashboard 
+      <Dashboard
         projects={projects}
         tasks={tasks}
         requirements={requirements}

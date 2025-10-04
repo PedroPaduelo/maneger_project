@@ -99,7 +99,7 @@ export function CreateTaskDialog({ projectId, onTaskCreated }: CreateTaskDialogP
           Nova Tarefa
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[800px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Criar Nova Tarefa</DialogTitle>
           <DialogDescription>

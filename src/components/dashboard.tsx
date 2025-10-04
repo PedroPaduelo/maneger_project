@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Project, Task, Requirement, HistorySummary } from "@/lib/types";
 import { ProjectCard } from "@/components/project-card";
 import { ProjectTable } from "@/components/project-table";
+import { ProjectFilters } from "@/components/project-filters";
 import { NotificationDropdown } from "@/components/notification-dropdown";
 import { CreateProjectDialog } from "@/components/create-project-dialog";
 import { AuthNav } from "@/components/auth-nav";
@@ -19,9 +20,11 @@ import { DashboardCharts } from "@/components/dashboard-charts";
 import { RecentActivities } from "@/components/recent-activities";
 import { PerformanceMetrics } from "@/components/performance-metrics";
 import { AutoRefreshHeader } from "@/components/auto-refresh-header";
+import { useProjects } from "@/hooks";
 import { Plus, Search, Filter, Star, Clock, CheckCircle, AlertTriangle, LayoutDashboard, BarChart3, TrendingUp, LayoutGrid, Table as TableIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "next-auth/react";
+import { useQueryClient } from '@tanstack/react-query';
 
 interface DashboardProps {
   projects: Project[];
@@ -32,22 +35,40 @@ interface DashboardProps {
 
 export function Dashboard({ projects, tasks, requirements, historySummaries }: DashboardProps) {
   const { data: session, status } = useSession();
-  const [filteredProjects, setFilteredProjects] = useState<Project[]>(projects);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
+  const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [viewMode, setViewMode] = useState<"card" | "table">("card");
   const { toast } = useToast();
 
-  const handleProjectCreated = () => {
-    // This will be handled by the parent component re-fetching data
-    window.location.reload();
-  };
+  // Use server-side filtering with TanStack Query
+  const {
+    data: filteredProjects = [],
+    isLoading: projectsLoading,
+    error: projectsError
+  } = useProjects({
+    search: searchTerm,
+    status: statusFilter !== "all" ? statusFilter : undefined,
+    priority: priorityFilter !== "all" ? priorityFilter : undefined,
+    tags: selectedTags.length > 0 ? selectedTags : undefined,
+  });
 
-  const handleAutoRefresh = () => {
-    // Refresh the page to get latest data
-    window.location.reload();
-  };
+  const handleProjectCreated = useCallback(() => {
+    // Data will be automatically updated by TanStack Query
+    toast.success("Projeto criado", {
+      description: "O projeto foi criado e adicionado à lista.",
+    });
+  }, [toast]);
+
+  const handleAutoRefresh = useCallback(() => {
+    // Invalidate all queries to fetch fresh data
+    queryClient.invalidateQueries();
+    toast.success("Dados atualizados", {
+      description: "Todos os dados foram atualizados com sucesso.",
+    });
+  }, [queryClient, toast]);
 
   
   // Calculate statistics
@@ -62,28 +83,6 @@ export function Dashboard({ projects, tasks, requirements, historySummaries }: D
   
   const totalRequirements = requirements.length;
   const highPriorityRequirements = requirements.filter(r => r.priority === "Alta").length;
-
-  // Filter projects based on search and filters
-  useEffect(() => {
-    let filtered = projects;
-
-    if (searchTerm) {
-      filtered = filtered.filter(project =>
-        project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        project.description.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    if (statusFilter !== "all") {
-      filtered = filtered.filter(project => project.status === statusFilter);
-    }
-
-    if (priorityFilter !== "all") {
-      filtered = filtered.filter(project => project.priority === priorityFilter);
-    }
-
-    setFilteredProjects(filtered);
-  }, [projects, searchTerm, statusFilter, priorityFilter]);
 
   const handleCreateProject = () => {
     // This is now handled by the CreateProjectDialog component
@@ -261,53 +260,25 @@ export function Dashboard({ projects, tasks, requirements, historySummaries }: D
             <ProjectTable projects={filteredProjects} />
           ) : (
             <>
-              {/* Filters and Search para Card View */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Filtros e Busca</CardTitle>
-                  <CardDescription>
-                    Encontre projetos rapidamente usando os filtros abaixo
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <div className="flex-1">
-                      <div className="relative">
-                        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          placeholder="Buscar projetos..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todos os Status</SelectItem>
-                        <SelectItem value="Ativo">Ativo</SelectItem>
-                        <SelectItem value="Pausado">Pausado</SelectItem>
-                        <SelectItem value="Concluída">Concluída</SelectItem>
-                        <SelectItem value="Cancelado">Cancelado</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Prioridade" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todas as Prioridades</SelectItem>
-                        <SelectItem value="Alta">Alta</SelectItem>
-                        <SelectItem value="Média">Média</SelectItem>
-                        <SelectItem value="Baixa">Baixa</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Enhanced Filters Component */}
+              <ProjectFilters
+                searchTerm={searchTerm}
+                onSearchTermChange={setSearchTerm}
+                statusFilter={statusFilter !== "all" ? [statusFilter] : []}
+                onStatusFilterChange={(statuses) => setStatusFilter(statuses.length > 0 ? statuses[0] : "all")}
+                priorityFilter={priorityFilter !== "all" ? [priorityFilter] : []}
+                onPriorityFilterChange={(priorities) => setPriorityFilter(priorities.length > 0 ? priorities[0] : "all")}
+                isFavoriteFilter="all"
+                onIsFavoriteFilterChange={() => {}}
+                selectedTags={selectedTags}
+                onSelectedTagsChange={setSelectedTags}
+                resetFilters={() => {
+                  setSearchTerm("");
+                  setStatusFilter("all");
+                  setPriorityFilter("all");
+                  setSelectedTags([]);
+                }}
+              />
 
               {/* Projects List em Cards */}
               <div className="space-y-4">
@@ -317,7 +288,7 @@ export function Dashboard({ projects, tasks, requirements, historySummaries }: D
                       <div className="text-center space-y-2">
                         <h3 className="text-lg font-medium">Nenhum projeto encontrado</h3>
                         <p className="text-muted-foreground">
-                          {searchTerm || statusFilter !== "all" || priorityFilter !== "all"
+                          {searchTerm || statusFilter !== "all" || priorityFilter !== "all" || selectedTags.length > 0
                             ? "Tente ajustar seus filtros ou termos de busca."
                             : "Comece criando seu primeiro projeto."}
                         </p>

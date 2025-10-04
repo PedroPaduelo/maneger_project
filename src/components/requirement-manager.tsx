@@ -29,6 +29,8 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import { MarkdownEditor } from "@/components/markdown-editor";
+import { MarkdownRenderer } from "@/components/markdown-renderer";
 
 export function RequirementManager() {
   const params = useParams();
@@ -351,12 +353,13 @@ export function RequirementManager() {
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium">Descrição</label>
-                    <Textarea
+                    <MarkdownEditor
                       value={editForm.description}
-                      onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                      onChange={(value) => setEditForm(prev => ({ ...prev, description: value }))}
+                      label="Descrição"
+                      description="Descreva o requisito em detalhes usando markdown para melhor formatação."
+                      placeholder="Estruture seu requisito com markdown para melhor clareza..."
                       className="mt-1"
-                      rows={6}
                     />
                   </div>
                 </div>
@@ -364,7 +367,13 @@ export function RequirementManager() {
                 <div className="space-y-4">
                   <div>
                     <h3 className="font-semibold mb-2">{requirement.title}</h3>
-                    <p className="text-muted-foreground">{requirement.description}</p>
+                    {requirement.description ? (
+                      <div className="prose prose-sm max-w-none dark:prose-invert">
+                        <MarkdownRenderer content={requirement.description} />
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground italic">Nenhuma descrição disponível</p>
+                    )}
                   </div>
 
                   {requirement.category && (

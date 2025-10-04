@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Search, Filter, X } from "lucide-react";
+import { TagFilters } from "@/components/tag-filters";
 
 export interface ProjectFiltersProps {
   searchTerm: string;
@@ -28,6 +29,8 @@ export interface ProjectFiltersProps {
   onPriorityFilterChange: (priority: string[]) => void;
   isFavoriteFilter: string;
   onIsFavoriteFilterChange: (filter: string) => void;
+  selectedTags: number[];
+  onSelectedTagsChange: (tags: number[]) => void;
   resetFilters: () => void;
 }
 
@@ -59,13 +62,16 @@ export function ProjectFilters({
   onPriorityFilterChange,
   isFavoriteFilter,
   onIsFavoriteFilterChange,
+  selectedTags,
+  onSelectedTagsChange,
   resetFilters,
 }: ProjectFiltersProps) {
 
   const hasActiveFilters = searchTerm ||
     statusFilter.length > 0 ||
     priorityFilter.length > 0 ||
-    isFavoriteFilter !== "all";
+    isFavoriteFilter !== "all" ||
+    selectedTags.length > 0;
 
   const handleStatusToggle = (status: string) => {
     const newStatusFilter = statusFilter.includes(status)
@@ -185,6 +191,14 @@ export function ProjectFilters({
         </div>
       </div>
 
+      {/* Tag Filters */}
+      <div className="pt-2 border-t">
+        <TagFilters
+          selectedTags={selectedTags}
+          onTagsChange={onSelectedTagsChange}
+        />
+      </div>
+
       {/* Active Filters Display */}
       {hasActiveFilters && (
         <div className="flex flex-wrap gap-2 pt-2 border-t">
@@ -232,6 +246,17 @@ export function ProjectFilters({
               </button>
             </Badge>
           )}
+          {selectedTags.map((tagId) => (
+            <Badge key={tagId} variant="outline" className="flex items-center gap-1">
+              Tag #{tagId}
+              <button
+                onClick={() => onSelectedTagsChange(selectedTags.filter(id => id !== tagId))}
+                className="ml-1 hover:text-destructive"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
         </div>
       )}
     </div>

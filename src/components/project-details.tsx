@@ -39,6 +39,7 @@ import { RequirementTable } from "@/components/requirement-table";
 import { ViewToggle } from "@/components/view-toggle";
 import { useViewMode } from "@/hooks/use-view-mode";
 import { useRequirementViewMode } from "@/hooks/use-requirement-view-mode";
+import { MarkdownRenderer } from "@/components/markdown-renderer";
 
 export function ProjectDetails() {
   const params = useParams();
@@ -228,7 +229,13 @@ export function ProjectDetails() {
             <CardContent className="space-y-4">
               <div>
                 <h3 className="font-semibold mb-2">Descrição</h3>
-                <p className="text-muted-foreground">{project.description}</p>
+                <div className="prose prose-sm max-w-none dark:prose-invert">
+                  {project.description ? (
+                    <MarkdownRenderer content={project.description || ""} />
+                  ) : (
+                    <p className="text-muted-foreground italic">Nenhuma descrição fornecida</p>
+                  )}
+                </div>
               </div>
               
               <div className="grid gap-4 md:grid-cols-2">
@@ -328,7 +335,9 @@ export function ProjectDetails() {
               {project.notes && (
                 <div>
                   <h3 className="font-semibold mb-2 text-sm">Observações</h3>
-                  <p className="text-sm text-muted-foreground">{project.notes}</p>
+                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                    <MarkdownRenderer content={project.notes} />
+                  </div>
                 </div>
               )}
             </CardContent>

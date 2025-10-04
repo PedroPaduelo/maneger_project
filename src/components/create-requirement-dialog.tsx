@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { MarkdownEditor } from "@/components/markdown-editor";
 
 interface CreateRequirementDialogProps {
   projectId: number;
@@ -96,7 +96,7 @@ export function CreateRequirementDialog({ projectId, onRequirementCreated }: Cre
           Novo Requisito
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[800px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Criar Novo Requisito</DialogTitle>
           <DialogDescription>
@@ -117,13 +117,32 @@ export function CreateRequirementDialog({ projectId, onRequirementCreated }: Cre
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
-            <Textarea
-              id="description"
+            <MarkdownEditor
               value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Descreva o requisito em detalhes..."
-              rows={4}
+              onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
+              label="Descrição"
+              description="Descreva o requisito em detalhes usando markdown para melhor formatação."
+              placeholder="Ex:
+# Requisito de Autenticação
+
+## Objetivo
+Implementar sistema seguro de autenticação de usuários
+
+## Funcionalidades
+- [ ] Login com email e senha
+- [ ] Recuperação de senha
+- [ ] Autenticação de dois fatores
+
+## Critérios de Aceite
+- Usuário deve conseguir fazer login
+- Senha deve ser criptografada
+- Sistema deve validar formato do email
+
+## Requisitos Técnicos
+- JWT para autenticação
+- bcrypt para hash de senhas
+- Validação de email no frontend e backend
+"
             />
           </div>
 

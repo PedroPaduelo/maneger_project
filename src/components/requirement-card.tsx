@@ -17,6 +17,7 @@ import { ptBR } from "date-fns/locale";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { EditRequirementDialog } from "@/components/edit-requirement-dialog";
+import { MarkdownRenderer } from "@/components/markdown-renderer";
 
 interface RequirementCardProps {
   requirement: Requirement;
@@ -29,6 +30,25 @@ export function RequirementCard({ requirement }: RequirementCardProps) {
   const handleRequirementUpdated = () => {
     // Refresh the page or update the local state
     window.location.reload();
+  };
+
+  // Função para extrair texto plano do markdown para o preview
+  const getPlainTextFromMarkdown = (markdown: string) => {
+    return markdown
+      .replace(/^#+\s/gm, '') // Remove headers
+      .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold formatting but keep text
+      .replace(/\*(.*?)\*/g, '$1') // Remove italic formatting but keep text
+      .replace(/`(.*?)`/g, '$1') // Remove inline code formatting but keep text
+      .replace(/^- \[ \] /gm, '▢ ') // Convert checkboxes
+      .replace(/^- \[x\] /gm, '☑ ') // Convert checked boxes
+      .replace(/^[-*+]\s/gm, '• ') // Convert list items
+      .replace(/^\d+\.\s/gm, '• ') // Convert numbered lists
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Remove markdown links but keep text
+      .replace(/```[\s\S]*?```/g, '[Código]') // Replace code blocks
+      .split('\n')
+      .filter(line => line.trim())
+      .slice(0, 2)
+      .join(' • ');
   };
 
   const getPriorityColor = (priority: string) => {
@@ -85,7 +105,11 @@ export function RequirementCard({ requirement }: RequirementCardProps) {
               {requirement.title}
             </CardTitle>
             <CardDescription className="line-clamp-2 mt-1">
-              {requirement.description}
+              {requirement.description && (
+                <span className="text-sm">
+                  {getPlainTextFromMarkdown(requirement.description)}
+                </span>
+              )}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2 ml-2">
@@ -150,9 +174,18 @@ export function RequirementCard({ requirement }: RequirementCardProps) {
             <FileText className="h-4 w-4" />
             <span>Descrição</span>
           </div>
-          <p className="text-sm text-muted-foreground line-clamp-4">
-            {requirement.description}
-          </p>
+          {requirement.description ? (
+            <div className="text-sm text-muted-foreground max-h-32 overflow-y-auto">
+              <MarkdownRenderer
+                content={requirement.description}
+                className="prose prose-sm max-w-none dark:prose-invert [&>*:first-child]:mt-0 [&>*:last-child]:mb-0"
+              />
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground italic">
+              Nenhuma descrição disponível
+            </p>
+          )}
         </div>
 
         {/* Footer */}

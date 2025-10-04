@@ -7,10 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Plus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { DirectorySelector } from "@/components/directory-selector";
+import { MarkdownEditor } from "@/components/markdown-editor";
 
 interface CreateProjectDialogProps {
   onProjectCreated: () => void;
@@ -135,7 +137,7 @@ export function CreateProjectDialog({ onProjectCreated }: CreateProjectDialogPro
           Novo Projeto
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[800px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Criar Novo Projeto</DialogTitle>
           <DialogDescription>
@@ -144,18 +146,18 @@ export function CreateProjectDialog({ onProjectCreated }: CreateProjectDialogPro
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome do Projeto *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Digite o nome do projeto"
-                required
-              />
-            </div>
-            
+          <div className="space-y-2">
+            <Label htmlFor="name">Nome do Projeto *</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="Digite o nome do projeto"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-1">
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
               <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}>
@@ -170,20 +172,7 @@ export function CreateProjectDialog({ onProjectCreated }: CreateProjectDialogPro
                 </SelectContent>
               </Select>
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Descrição</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Descreva o projeto..."
-              rows={3}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="priority">Prioridade</Label>
               <Select value={formData.priority} onValueChange={(value) => setFormData(prev => ({ ...prev, priority: value }))}>
@@ -197,20 +186,48 @@ export function CreateProjectDialog({ onProjectCreated }: CreateProjectDialogPro
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
-              <Label htmlFor="progress">Progresso Inicial (%)</Label>
-              <Input
-                id="progress"
-                type="number"
-                min="0"
-                max="100"
-                value={formData.progress}
-                onChange={(e) => setFormData(prev => ({ ...prev, progress: parseInt(e.target.value) || 0 }))}
+              <Label htmlFor="progress">Progresso Inicial ({formData.progress}%)</Label>
+              <Slider
+                value={[formData.progress]}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, progress: value[0] }))}
+                max={100}
+                min={0}
+                step={1}
+                className="mt-2"
               />
             </div>
           </div>
 
+          <div className="space-y-2">
+            <MarkdownEditor
+              value={formData.description}
+              onChange={(value) => setFormData(prev => ({ ...prev, description: value }))}
+              label="Descrição"
+              description="Descreva o projeto em detalhes usando markdown para melhor formatação."
+              placeholder="Ex:
+# Projeto: Sistema de E-commerce
+
+## Objetivo
+Desenvolver plataforma completa de e-commerce
+
+## Funcionalidades Principais
+- [ ] Sistema de autenticação
+- [ ] Catálogo de produtos
+- [ ] Carrinho de compras
+- [ ] Integração com pagamentos
+
+## Stack Tecnológico
+- Frontend: React/Next.js
+- Backend: Node.js/Express
+- Database: PostgreSQL
+- Autenticação: JWT
+"
+            />
+          </div>
+
+  
           <div className="space-y-2">
             <Label htmlFor="stack">Tecnologias (separadas por vírgula)</Label>
             <Input
@@ -222,13 +239,28 @@ export function CreateProjectDialog({ onProjectCreated }: CreateProjectDialogPro
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Observações</Label>
-            <Textarea
-              id="notes"
+            <MarkdownEditor
               value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-              placeholder="Observações adicionais sobre o projeto..."
-              rows={2}
+              onChange={(value) => setFormData(prev => ({ ...prev, notes: value }))}
+              label="Observações"
+              description="Observações adicionais sobre o projeto usando markdown para melhor organização."
+              placeholder="Ex:
+## Notas Importantes
+
+### Configuração de Ambiente
+- Node.js 18+ requerido
+- PostgreSQL 14+
+- Redis para cache
+
+### Informações de Deploy
+- Hospedado na AWS
+- CI/CD com GitHub Actions
+- Variáveis de ambiente no .env
+
+### Contatos
+- Product Manager: João Silva
+- Tech Lead: Maria Santos
+"
             />
           </div>
 
