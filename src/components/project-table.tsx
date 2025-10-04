@@ -68,6 +68,7 @@ export function ProjectTable({ projects }: ProjectTableProps) {
   const [statusFilter, setStatusFilter] = React.useState<string[]>([]);
   const [priorityFilter, setPriorityFilter] = React.useState<string[]>([]);
   const [isFavoriteFilter, setIsFavoriteFilter] = React.useState("all");
+  const [selectedTags, setSelectedTags] = React.useState<number[]>([]);
 
   // Apply filters to the data
   const filteredData = React.useMemo(() => {
@@ -99,8 +100,15 @@ export function ProjectTable({ projects }: ProjectTableProps) {
       filtered = filtered.filter((project) => !project.isFavorite);
     }
 
+    // Tag filter
+    if (selectedTags.length > 0) {
+      filtered = filtered.filter((project) =>
+        project.projectTags?.some(tag => selectedTags.includes(tag.tagId))
+      );
+    }
+
     return filtered;
-  }, [projects, globalFilter, statusFilter, priorityFilter, isFavoriteFilter]);
+  }, [projects, globalFilter, statusFilter, priorityFilter, isFavoriteFilter, selectedTags]);
 
   // Update global filter when search term changes
   React.useEffect(() => {
@@ -488,6 +496,7 @@ export function ProjectTable({ projects }: ProjectTableProps) {
     setStatusFilter([]);
     setPriorityFilter([]);
     setIsFavoriteFilter("all");
+    setSelectedTags([]);
     setColumnFilters([]);
   };
 
@@ -503,6 +512,8 @@ export function ProjectTable({ projects }: ProjectTableProps) {
         onPriorityFilterChange={setPriorityFilter}
         isFavoriteFilter={isFavoriteFilter}
         onIsFavoriteFilterChange={setIsFavoriteFilter}
+        selectedTags={selectedTags || []}
+        onSelectedTagsChange={setSelectedTags}
         resetFilters={resetFilters}
       />
 

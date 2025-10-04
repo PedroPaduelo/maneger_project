@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { Tag } from '@/lib/types';
 import { toast } from 'sonner';
 
@@ -116,6 +116,79 @@ export function useCreateTag() {
     onError: (err) => {
       toast.error('Erro ao criar tag', {
         description: 'Não foi possível criar a tag. Tente novamente.',
+      });
+    },
+  });
+}
+
+// Hook para atualizar tag
+export function useUpdateTag() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, tagData }: { id: number; tagData: Partial<Tag> }) => {
+      const response = await fetch(`/api/tags/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(tagData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update tag');
+      }
+
+      const data: TagResponse = await response.json();
+      return data.tag;
+    },
+    onSuccess: (tag) => {
+      // Invalidar queries relacionadas
+      queryClient.invalidateQueries({ queryKey: tagKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: tagKeys.withCount() });
+      queryClient.invalidateQueries({ queryKey: tagKeys.detail(tag.id) });
+      toast.success('Tag atualizada', {
+        description: `A tag "${tag.name}" foi atualizada com sucesso.`,
+      });
+    },
+    onError: (err) => {
+      toast.error('Erro ao atualizar tag', {
+        description: err.message || 'Não foi possível atualizar a tag. Tente novamente.',
+      });
+    },
+  });
+}
+
+// Hook para deletar tag
+export function useDeleteTag() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/tags/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete tag');
+      }
+
+      return response.json();
+    },
+    onSuccess: (_, tagId) => {
+      // Invalidar queries relacionadas
+      queryClient.invalidateQueries({ queryKey: tagKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: tagKeys.withCount() });
+      queryClient.removeQueries({ queryKey: tagKeys.detail(tagId) });
+      toast.success('Tag excluída', {
+        description: 'A tag foi excluída com sucesso.',
+      });
+    },
+    onError: (err) => {
+      toast.error('Erro ao excluir tag', {
+        description: err.message || 'Não foi possível excluir a tag. Tente novamente.',
       });
     },
   });

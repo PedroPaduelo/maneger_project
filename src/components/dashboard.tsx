@@ -116,9 +116,9 @@ export function Dashboard({ projects, tasks, requirements, historySummaries }: D
             <LayoutDashboard className="h-4 w-4" />
             Visão Geral
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Análise
+          <TabsTrigger value="activities" className="flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            Atividades
           </TabsTrigger>
           <TabsTrigger value="performance" className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4" />
@@ -187,32 +187,21 @@ export function Dashboard({ projects, tasks, requirements, historySummaries }: D
             </Card>
           </div>
 
-          {/* Charts and Activities */}
-          <div className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-              <DashboardCharts
-                projects={projects}
-                tasks={tasks}
-                requirements={requirements}
-              />
-            </div>
-            <div>
-              <RecentActivities
-                projects={projects}
-                tasks={tasks}
-                requirements={requirements}
-                historySummaries={historySummaries}
-              />
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* Analytics Tab */}
-        <TabsContent value="analytics" className="space-y-6">
-          <DashboardCharts 
+          {/* Charts Section */}
+          <DashboardCharts
             projects={projects}
             tasks={tasks}
             requirements={requirements}
+          />
+        </TabsContent>
+
+        {/* Activities Tab */}
+        <TabsContent value="activities" className="space-y-6">
+          <RecentActivities
+            projects={projects}
+            tasks={tasks}
+            requirements={requirements}
+            historySummaries={historySummaries}
           />
         </TabsContent>
 

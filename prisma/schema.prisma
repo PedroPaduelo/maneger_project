@@ -24,6 +24,7 @@ model Account {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@map("tbl_account")
 }
 
 model Session {
@@ -32,6 +33,8 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("tbl_session")
 }
 
 model VerificationToken {
@@ -40,6 +43,7 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+  @@map("tbl_verification_token")
 }
 
 model Token {
@@ -53,6 +57,7 @@ model Token {
   @@index([userId])
   @@index([type])
   @@index([expiresAt])
+  @@map("tbl_token")
 }
 
 model User {
@@ -72,43 +77,44 @@ model User {
   updatedAt     DateTime  @updatedAt @map("updated_at")
   deletedAt     DateTime? @map("deleted_at")
 
-  accounts      Account[]
-  sessions      Session[]
-  tokens        Token[]
-  projects      Project[] @relation("ProjectOwner")
-  notifications Notification[]
+  accounts         Account[]
+  sessions         Session[]
+  tokens           Token[]
+  projects         Project[]         @relation("ProjectOwner")
+  notifications    Notification[]
   projectFavorites ProjectFavorite[]
 
   @@index([isActive])
   @@index([createdAt])
   @@index([email])
+  @@map("tbl_user")
 }
 
 model Project {
-  id                Int                       @id @default(autoincrement())
-  name              String                    
-  description       String                    @map("descritivo")
-  stack             String                    
-  notes             String?                   @map("obs_about_project")
-  lastModel         String?                   @map("last_model")
-  status            String                    @default("Ativo") 
-  priority          String                    @default("Média") 
-  progress          Int                       @default(0)
-  isFavorite        Boolean                   @default(false) @map("is_favorite")
-  color             String?
-  tags              String?
-  metadata          Json?
-  executionPath     String?                   @map("execution_path")
-  createdAt         DateTime                  @default(now()) @map("created_at")
-  updatedAt         DateTime                  @updatedAt @map("updated_at")
-  historySummaries  HistorySummary[]
-  requirements      Requirement[]
-  tasks             Task[]
-  projectFavorites  ProjectFavorite[]
-  projectTags       ProjectTag[]
-  notifications     Notification[]
-  userId            String?                   @map("user_id")
-  user              User?                     @relation("ProjectOwner", fields: [userId], references: [id])
+  id               Int               @id @default(autoincrement())
+  name             String
+  description      String            @map("descritivo")
+  stack            String
+  notes            String?           @map("obs_about_project")
+  lastModel        String?           @map("last_model")
+  status           String            @default("Ativo")
+  priority         String            @default("Média")
+  progress         Int               @default(0)
+  isFavorite       Boolean           @default(false) @map("is_favorite")
+  color            String?
+  tags             String?
+  metadata         Json?
+  executionPath    String?           @map("execution_path")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  historySummaries HistorySummary[]
+  requirements     Requirement[]
+  tasks            Task[]
+  projectFavorites ProjectFavorite[]
+  projectTags      ProjectTag[]
+  notifications    Notification[]
+  userId           String?           @map("user_id")
+  user             User?             @relation("ProjectOwner", fields: [userId], references: [id])
 
   @@index([createdAt], name: "idx_project_created_at")
   @@index([updatedAt], name: "idx_project_updated_at")
@@ -122,21 +128,21 @@ model Project {
 }
 
 model Task {
-  id                     Int                    @id @default(autoincrement())
-  title                  String                 
-  guidancePrompt         String                 @map("guidance_prompt")
-  additionalInformation  String?                @map("additional_information")
-  description            String?                @map("task_description")
-  status                 String                 @default("Pendente") 
-  createdBy              String?                 @map("created_by")
-  updatedBy              String?                 @map("updated_by")
-  projectId              Int                    @map("project_id")
-  result                 String?                @map("result_task")
-  createdAt              DateTime               @default(now()) @map("created_at")
-  updatedAt              DateTime               @updatedAt @map("updated_at")
-  requirementTasks       RequirementTask[]
-  taskTodos              TaskTodo[]
-  project                Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id                    Int               @id @default(autoincrement())
+  title                 String
+  guidancePrompt        String            @map("guidance_prompt")
+  additionalInformation String?           @map("additional_information")
+  description           String?           @map("task_description")
+  status                String            @default("Pendente")
+  createdBy             String?           @map("created_by")
+  updatedBy             String?           @map("updated_by")
+  projectId             Int               @map("project_id")
+  result                String?           @map("result_task")
+  createdAt             DateTime          @default(now()) @map("created_at")
+  updatedAt             DateTime          @updatedAt @map("updated_at")
+  requirementTasks      RequirementTask[]
+  taskTodos             TaskTodo[]
+  project               Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId, status, createdAt], name: "idx_tasks_project_status_created_at")
   @@index([projectId, status, updatedAt], name: "idx_tasks_project_status_updated_at")
@@ -151,14 +157,14 @@ model Task {
 }
 
 model TaskTodo {
-  id               Int       @id @default(autoincrement())
-  taskId           Int       @map("task_id")
-  description      String    @map("item_description")
-  isCompleted      Boolean   @default(false) @map("is_completed")
-  sequence         Int       @default(0)
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
-  task             Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  id          Int      @id @default(autoincrement())
+  taskId      Int      @map("task_id")
+  description String   @map("item_description")
+  isCompleted Boolean  @default(false) @map("is_completed")
+  sequence    Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   @@index([taskId])
   @@index([isCompleted])
@@ -168,16 +174,16 @@ model TaskTodo {
 }
 
 model Requirement {
-  id               Int                    @id @default(autoincrement())
-  title            String                 @map("titulo")
-  description      String                 @map("descricao")
-  type             String                 @map("tipo")
-  category         String?                @map("categoria")
-  priority         String                 @default("Média") @map("prioridade")
-  projectId        Int                    @map("project_id")
-  createdAt        DateTime               @default(now()) @map("created_at")
-  updatedAt        DateTime               @updatedAt @map("updated_at")
-  project          Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id               Int               @id @default(autoincrement())
+  title            String            @map("titulo")
+  description      String            @map("descricao")
+  type             String            @map("tipo")
+  category         String?           @map("categoria")
+  priority         String            @default("Média") @map("prioridade")
+  projectId        Int               @map("project_id")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  project          Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   requirementTasks RequirementTask[]
 
   @@index([projectId, priority, createdAt], name: "idx_requisitos_project_priority_created")
@@ -189,13 +195,13 @@ model Requirement {
 }
 
 model RequirementTask {
-  id           Int           @id @default(autoincrement())
-  taskId       Int           @map("task_id")
-  requirementId Int          @map("requisito_id")
-  createdAt    DateTime      @default(now()) @map("created_at")
-  updatedAt    DateTime      @updatedAt @map("updated_at")
-  requirement  Requirement   @relation(fields: [requirementId], references: [id], onDelete: Cascade)
-  task         Task          @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  id            Int         @id @default(autoincrement())
+  taskId        Int         @map("task_id")
+  requirementId Int         @map("requisito_id")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  requirement   Requirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  task          Task        @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   @@unique([taskId, requirementId])
   @@index([requirementId], name: "idx_requisitos_tasks_requisito_id")
@@ -204,28 +210,28 @@ model RequirementTask {
 }
 
 model HistorySummary {
-  id         Int         @id @default(autoincrement())
-  summary    String      @map("sumary")
-  projectId  Int         @map("project_id")
-  createdBy  String?     @map("created_by")
-  createdAt  DateTime    @default(now()) @map("created_at")
-  updatedAt  DateTime    @updatedAt @map("updated_at")
-  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id        Int      @id @default(autoincrement())
+  summary   String   @map("sumary")
+  projectId Int      @map("project_id")
+  createdBy String?  @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@index([createdBy])
   @@index([createdAt])
   @@index([projectId, createdAt])
-  @@map("history_summary_project")
+  @@map("tbl_history_summary_project")
 }
 
 model ProjectFavorite {
-  id         Int         @id @default(autoincrement())
-  projectId  Int         @map("project_id")
-  userId     String      @map("user_id")
-  createdAt  DateTime    @default(now()) @map("created_at")
-  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        Int      @id @default(autoincrement())
+  projectId Int      @map("project_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, userId])
   @@index([userId], name: "idx_favorite_user_id")
@@ -234,25 +240,25 @@ model ProjectFavorite {
 }
 
 model Tag {
-  id           Int           @id @default(autoincrement())
-  name         String        @unique 
-  color        String?       
-  description  String?       
-  createdAt    DateTime      @default(now()) @map("created_at")
-  updatedAt    DateTime      @updatedAt @map("updated_at")
-  projectTags  ProjectTag[]
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  color       String?
+  description String?
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  projectTags ProjectTag[]
 
   @@index([name], name: "idx_tag_name")
   @@map("tbl_tag")
 }
 
 model ProjectTag {
-  id         Int         @id @default(autoincrement())
-  projectId  Int         @map("project_id")
-  tagId      Int         @map("tag_id")
-  createdAt  DateTime    @default(now()) @map("created_at")
-  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  tag        Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  id        Int      @id @default(autoincrement())
+  projectId Int      @map("project_id")
+  tagId     Int      @map("tag_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, tagId])
   @@index([projectId], name: "idx_project_tag_project_id")
@@ -263,14 +269,14 @@ model ProjectTag {
 model ProjectHistory {
   id          Int      @id @default(autoincrement())
   projectId   Int      @map("project_id")
-  action      String   
+  action      String
   entityType  String   @map("entity_type")
   entityId    Int?     @map("entity_id")
   oldValues   Json?    @map("old_values")
   newValues   Json?    @map("new_values")
-  userId      String?     @map("user_id")
-  userName    String?     @map("user_name")
-  description String   
+  userId      String?  @map("user_id")
+  userName    String?  @map("user_name")
+  description String
   createdAt   DateTime @default(now()) @map("created_at")
 
   @@index([projectId, createdAt], name: "idx_history_project_created")
@@ -285,19 +291,19 @@ model ProjectHistory {
 }
 
 model Notification {
-  id         Int          @id @default(autoincrement())
-  projectId  Int?         @map("project_id")
-  userId      String       @map("user_id")
-  type       String       
-  title      String       
-  message    String       
-  metadata   Json?
-  isRead     Boolean      @default(false) @map("is_read")
-  priority   String       @default("Média") 
-  createdAt  DateTime     @default(now()) @map("created_at")
-  readAt     DateTime?    @map("read_at")
-  project    Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        Int       @id @default(autoincrement())
+  projectId Int?      @map("project_id")
+  userId    String    @map("user_id")
+  type      String
+  title     String
+  message   String
+  metadata  Json?
+  isRead    Boolean   @default(false) @map("is_read")
+  priority  String    @default("Média")
+  createdAt DateTime  @default(now()) @map("created_at")
+  readAt    DateTime? @map("read_at")
+  project   Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, isRead, createdAt], name: "idx_notification_user_read_created")
   @@index([userId, priority, createdAt], name: "idx_notification_user_priority_created")

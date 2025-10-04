@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ import { MarkdownRenderer } from "@/components/markdown-renderer";
 export function ProjectDetails() {
   const params = useParams();
   const router = useRouter();
+  const { data: session, status } = useSession();
   const { toast } = useToast();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
@@ -54,10 +56,18 @@ export function ProjectDetails() {
   const projectId = params.id as string;
 
   useEffect(() => {
+    // Check if user is authenticated
+    if (status === "loading") return; // Still loading
+
+    if (!session) {
+      router.push("/auth/signin");
+      return;
+    }
+
     if (projectId) {
       fetchProject();
     }
-  }, [projectId]);
+  }, [projectId, session, status]);
 
   const fetchProject = async () => {
     try {
@@ -157,6 +167,29 @@ export function ProjectDetails() {
     // Refresh the project data to show the new requirement
     fetchProject();
   };
+
+  if (status === "loading") {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Verificando autenticação...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Acesso Restrito</h1>
+          <p className="text-muted-foreground mb-4">Você precisa estar autenticado para acessar esta página.</p>
+          <Button onClick={() => router.push("/auth/signin")}>Fazer Login</Button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

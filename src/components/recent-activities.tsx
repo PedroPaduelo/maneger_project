@@ -193,10 +193,10 @@ export function RecentActivities({
       }
     });
 
-    // Sort by timestamp (most recent first) and take last 3
+    // Sort by timestamp (most recent first) and take last 5
     const sortedActivities = newActivities
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-      .slice(0, 3);
+      .slice(0, 5);
 
     setActivities(sortedActivities);
     setLoading(false);
@@ -325,7 +325,7 @@ export function RecentActivities({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="max-h-[350px]">
+        <ScrollArea className="max-h-[600px]">
           <div className="space-y-4">
             {activities.length === 0 ? (
               <div className="text-center py-8">

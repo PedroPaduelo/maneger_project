@@ -28,9 +28,7 @@ export function CreateProjectDialog({ onProjectCreated }: CreateProjectDialogPro
     notes: "",
     status: "Ativo",
     priority: "Média",
-    progress: 0,
     isFavorite: false,
-    color: "#3b82f6",
     tags: [] as string[],
     executionPath: "",
   });
@@ -82,9 +80,7 @@ export function CreateProjectDialog({ onProjectCreated }: CreateProjectDialogPro
         notes: "",
         status: "Ativo",
         priority: "Média",
-        progress: 0,
         isFavorite: false,
-        color: "#3b82f6",
         tags: [],
         executionPath: "",
       });
@@ -187,18 +183,7 @@ export function CreateProjectDialog({ onProjectCreated }: CreateProjectDialogPro
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="progress">Progresso Inicial ({formData.progress}%)</Label>
-              <Slider
-                value={[formData.progress]}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, progress: value[0] }))}
-                max={100}
-                min={0}
-                step={1}
-                className="mt-2"
-              />
             </div>
-          </div>
 
           <div className="space-y-2">
             <MarkdownEditor

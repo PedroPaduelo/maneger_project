@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { Dashboard } from "@/components/dashboard";
 import { useProjects, useTasksQuery, useRequirements } from "@/hooks";
 import { Project, Task, Requirement, HistorySummary } from "@/lib/types";
+import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -38,7 +39,30 @@ export default function Home() {
   // Error state combinado
   const error = projectsError || tasksError || requirementsError;
 
-  if (status === "loading" || isLoading) {
+  if (status === "loading") {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Verificando autenticação...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Acesso Restrito</h1>
+          <p className="text-muted-foreground mb-4">Você precisa estar autenticado para acessar esta página.</p>
+          <Button onClick={() => window.location.href = "/auth/signin"}>Fazer Login</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">

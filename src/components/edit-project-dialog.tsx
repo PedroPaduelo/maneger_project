@@ -42,9 +42,7 @@ export function EditProjectDialog({ project, onProjectUpdated, trigger }: EditPr
     notes: project.notes || "",
     status: project.status,
     priority: project.priority,
-    progress: project.progress,
     isFavorite: project.isFavorite,
-    color: project.color || "",
     tags: parseTags(project.tags),
     executionPath: (project as any).executionPath || ""
   });
@@ -185,31 +183,9 @@ export function EditProjectDialog({ project, onProjectUpdated, trigger }: EditPr
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="progress">Progresso (%)</Label>
-              <Input
-                id="progress"
-                type="number"
-                min="0"
-                max="100"
-                value={formData.progress}
-                onChange={(e) => setFormData({ ...formData, progress: parseInt(e.target.value) || 0 })}
-                placeholder="0"
-              />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="color">Cor (opcional)</Label>
-            <Input
-              id="color"
-              type="color"
-              value={formData.color}
-              onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-              className="h-10 w-20"
-            />
-          </div>
-
+  
           <div className="space-y-2">
             <Label>Tags</Label>
             <div className="flex gap-2 mb-2">
