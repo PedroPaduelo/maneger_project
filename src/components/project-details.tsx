@@ -322,9 +322,7 @@ export function ProjectDetails() {
                   <h3 className="font-semibold mb-2">Tags</h3>
                   <TagList
                     tags={allTags}
-                    variant="outline"
                     size="sm"
-                    useInlineStyle={true}
                   />
                 </div>
               )}

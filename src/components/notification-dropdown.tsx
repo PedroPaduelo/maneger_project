@@ -241,7 +241,7 @@ export function NotificationDropdown({ userId = "system" }: NotificationDropdown
                     <div
                       key={notification.id}
                       className={`p-3 border-b cursor-pointer hover:bg-muted/50 transition-colors ${
-                        !notification.isRead ? "bg-blue-50/50" : ""
+                        !notification.isRead ? "bg-primary/5 dark:bg-primary/10" : ""
                       }`}
                       onClick={() => handleNotificationClick(notification)}
                     >
@@ -257,7 +257,7 @@ export function NotificationDropdown({ userId = "system" }: NotificationDropdown
                                 {notification.priority}
                               </Badge>
                               {!notification.isRead && (
-                                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                                <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
                               )}
                             </div>
                           </div>

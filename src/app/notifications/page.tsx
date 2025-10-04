@@ -328,7 +328,7 @@ export default function NotificationsPage() {
                 <div
                   key={notification.id}
                   className={`p-4 border rounded-lg cursor-pointer transition-colors hover:bg-muted/50 ${
-                    !notification.isRead ? "bg-blue-50 border-blue-200" : ""
+                    !notification.isRead ? "bg-primary/5 border-primary/20 dark:bg-primary/10 dark:border-primary/30" : ""
                   }`}
                   onClick={() => handleNotificationClick(notification)}
                 >
@@ -344,7 +344,7 @@ export default function NotificationsPage() {
                             {notification.priority}
                           </Badge>
                           {!notification.isRead && (
-                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <div className="w-2 h-2 bg-primary rounded-full"></div>
                           )}
                         </div>
                       </div>

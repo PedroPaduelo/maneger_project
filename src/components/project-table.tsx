@@ -367,10 +367,8 @@ export function ProjectTable({ projects }: ProjectTableProps) {
             <div className="min-w-[150px]">
               <TagList
                 tags={allTags}
-                variant="outline"
                 size="sm"
                 maxTags={3}
-                useInlineStyle={true}
               />
             </div>
           );

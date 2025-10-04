@@ -4,6 +4,31 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Tag } from '@/lib/types';
 
+// Theme-aware color helper
+const useThemeColors = () => {
+  // Check if we're in dark mode using Tailwind's dark mode class
+  const isDarkMode = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+
+  return {
+    isDarkMode,
+    getColors: (color: string) => {
+      const baseColors = {
+        red: { light: '#ef4444', dark: '#f87171' },
+        blue: { light: '#3b82f6', dark: '#60a5fa' },
+        green: { light: '#22c55e', dark: '#4ade80' },
+        yellow: { light: '#eab308', dark: '#facc15' },
+        purple: { light: '#a855f7', dark: '#c084fc' },
+        pink: { light: '#ec4899', dark: '#f472b6' },
+        orange: { light: '#f97316', dark: '#fb923c' },
+        teal: { light: '#14b8a6', dark: '#2dd4bf' },
+      };
+
+      const selectedColor = baseColors[color as keyof typeof baseColors] || baseColors.blue;
+      return selectedColor[isDarkMode ? 'dark' : 'light'];
+    }
+  };
+};
+
 // Color options for tags
 const TAG_COLORS = [
   { value: 'red', label: 'Vermelho', preview: 'bg-red-100 text-red-800 border-red-200' },
@@ -16,7 +41,7 @@ const TAG_COLORS = [
   { value: 'teal', label: 'Ciano', preview: 'bg-teal-100 text-teal-800 border-teal-200' },
 ];
 
-// Get tag color styling
+// Get tag color styling (translucent like forms)
 const getTagColor = (color?: string) => {
   if (!color) return "bg-gray-100 text-gray-800 border-gray-200";
 
@@ -34,22 +59,25 @@ const getTagColor = (color?: string) => {
   return colorMap[color] || "bg-gray-100 text-gray-800 border-gray-200";
 };
 
-// Get tag color for inline styling (legacy approach)
+// Get theme-aware tag colors
 const getTagInlineColor = (color?: string) => {
-  if (!color) return { backgroundColor: '#f3f4f6', borderColor: '#d1d5db', color: '#374151' };
+  const { isDarkMode, getColors } = useThemeColors();
 
-  const colorMap: Record<string, { backgroundColor: string; borderColor: string; color: string }> = {
-    red: { backgroundColor: '#fee2e2', borderColor: '#fecaca', color: '#991b1b' },
-    blue: { backgroundColor: '#dbeafe', borderColor: '#bfdbfe', color: '#1e40af' },
-    green: { backgroundColor: '#dcfce7', borderColor: '#bbf7d0', color: '#166534' },
-    yellow: { backgroundColor: '#fef3c7', borderColor: '#fde68a', color: '#854d0e' },
-    purple: { backgroundColor: '#f3e8ff', borderColor: '#e9d5ff', color: '#6b21a8' },
-    pink: { backgroundColor: '#fce7f3', borderColor: '#fbcfe8', color: '#9f1239' },
-    orange: { backgroundColor: '#fed7aa', borderColor: '#fdba74', color: '#9a3412' },
-    teal: { backgroundColor: '#ccfbf1', borderColor: '#99f6e4', color: '#134e4a' },
+  if (!color) {
+    return isDarkMode
+      ? { backgroundColor: 'rgba(55, 65, 81, 0.5)', borderColor: 'rgba(75, 85, 99, 0.8)', color: 'rgba(209, 213, 219, 0.9)' }
+      : { backgroundColor: 'rgba(243, 244, 246, 0.8)', borderColor: 'rgba(209, 213, 219, 0.8)', color: 'rgba(55, 65, 81, 0.9)' };
+  }
+
+  const themeColor = getColors(color);
+
+  return {
+    backgroundColor: isDarkMode
+      ? `${themeColor}15` // More transparent in dark mode
+      : `${themeColor}20`, // Standard transparency in light mode
+    borderColor: themeColor,
+    color: themeColor
   };
-
-  return colorMap[color] || { backgroundColor: '#f3f4f6', borderColor: '#d1d5db', color: '#374151' };
 };
 
 interface TagComponentProps {
@@ -83,39 +111,18 @@ export function TagComponent({
 
   const baseClasses = `inline-flex items-center rounded-full font-medium ${sizeClasses[size]} ${className}`;
 
-  if (useInlineStyle) {
-    const inlineColors = getTagInlineColor(tagColor);
-
-    return (
-      <Badge
-        variant="outline"
-        className={baseClasses}
-        style={{
-          backgroundColor: inlineColors.backgroundColor,
-          borderColor: inlineColors.borderColor,
-          color: inlineColors.color,
-        }}
-      >
-        {tagName}
-      </Badge>
-    );
-  }
-
-  if (variant === 'outline') {
-    return (
-      <Badge
-        variant="outline"
-        className={`${baseClasses} ${getTagColor(tagColor)}`}
-      >
-        {tagName}
-      </Badge>
-    );
-  }
+  // Default to theme-aware inline style for consistency across the app
+  const inlineColors = getTagInlineColor(tagColor);
 
   return (
     <Badge
-      variant={variant}
-      className={`${baseClasses} ${getTagColor(tagColor)}`}
+      variant="outline"
+      className={`${baseClasses} border-2`}
+      style={{
+        backgroundColor: inlineColors.backgroundColor,
+        borderColor: inlineColors.borderColor,
+        color: inlineColors.color,
+      }}
     >
       {tagName}
     </Badge>

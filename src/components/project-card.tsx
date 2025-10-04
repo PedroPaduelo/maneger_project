@@ -210,10 +210,8 @@ function ProjectCardComponent({ project }: ProjectCardProps) {
           <div className="mb-4">
             <TagList
               tags={allTags}
-              variant="outline"
               size="sm"
               maxTags={3}
-              useInlineStyle={true}
             />
           </div>
         )}

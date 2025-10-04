@@ -4,12 +4,20 @@ import { db } from "@/lib/db";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get("userId") || "system";
+    let userId = searchParams.get("userId") || "system";
     const unreadOnly = searchParams.get("unreadOnly") === "true";
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");
 
     const skip = (page - 1) * limit;
+
+    // Get the first available user if userId is "system" or invalid
+    if (!userId || userId === "system") {
+      const firstUser = await db.user.findFirst({
+        select: { id: true }
+      });
+      userId = firstUser?.id || "system";
+    }
 
     const where: any = {
       userId
@@ -68,10 +76,19 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
+    // Get the first available user if userId is "system" or invalid
+    let userId = body.userId;
+    if (!userId || userId === "system") {
+      const firstUser = await db.user.findFirst({
+        select: { id: true }
+      });
+      userId = firstUser?.id || "system";
+    }
+
     const notification = await db.notification.create({
       data: {
-        userId: body.userId || "system",
+        userId: userId,
         type: body.type,
         title: body.title,
         message: body.message,

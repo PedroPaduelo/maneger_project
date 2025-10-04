@@ -311,7 +311,7 @@ export function EditProjectDialog({ project, onProjectUpdated, trigger }: EditPr
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
-                      </div>
+                      </Badge>
                     );
                   })}
                 </div>

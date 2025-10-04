@@ -9,8 +9,10 @@ interface ProjectsResponse {
   projects: Project[];
 }
 
+// API returns project directly in update endpoint
+// but wrapped in GET endpoint
 interface ProjectResponse {
-  project: Project;
+  project?: Project;
 }
 
 // Query keys para cache
@@ -143,6 +145,8 @@ export function useUpdateProject() {
 
   return useMutation({
     mutationFn: async ({ id, ...projectData }: Partial<Project> & { id: number }) => {
+      console.log('Updating project:', { id, projectData });
+
       const response = await fetch(`/api/projects/${id}`, {
         method: 'PUT',
         headers: {
@@ -151,12 +155,22 @@ export function useUpdateProject() {
         body: JSON.stringify(projectData),
       });
 
+      console.log('Response status:', response.status, response.statusText);
+
       if (!response.ok) {
-        throw new Error('Failed to update project');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('API Error:', errorData);
+        throw new Error(errorData.error || `Failed to update project: ${response.status}`);
       }
 
-      const data: ProjectResponse = await response.json();
-      return data.project;
+      const data = await response.json();
+      console.log('API Success - raw data:', data);
+
+      // Check if data is already the project object or wrapped
+      const project = data.project || data;
+      console.log('Extracted project:', project);
+
+      return project;
     },
     onMutate: async ({ id, ...projectData }) => {
       // Cancelar queries relacionadas
@@ -192,6 +206,7 @@ export function useUpdateProject() {
       return { previousProjects, previousProject };
     },
     onError: (err, variables, context) => {
+      console.error('Update project error:', err);
       // Reverter estados anteriores
       if (context?.previousProjects) {
         queryClient.setQueryData(projectKeys.lists(), context.previousProjects);
@@ -200,10 +215,17 @@ export function useUpdateProject() {
         queryClient.setQueryData(projectKeys.detail(variables.id), context.previousProject);
       }
       toast.error('Erro ao atualizar projeto', {
-        description: 'Não foi possível atualizar o projeto. Tente novamente.',
+        description: err.message || 'Não foi possível atualizar o projeto. Tente novamente.',
       });
     },
     onSuccess: (project) => {
+      console.log('Success callback - project:', project);
+
+      if (!project) {
+        console.error('Project is undefined in onSuccess callback');
+        return;
+      }
+
       // Invalidar queries relacionadas
       queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
       queryClient.invalidateQueries({ queryKey: projectKeys.detail(project.id) });
