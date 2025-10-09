@@ -18,9 +18,17 @@ export async function GET(
       );
     }
 
+    const projectId = parseInt(resolvedParams.id);
+    if (isNaN(projectId)) {
+      return NextResponse.json(
+        { error: "Invalid project ID" },
+        { status: 400 }
+      );
+    }
+
     const project = await db.project.findFirst({
       where: {
-        id: parseInt(resolvedParams.id),
+        id: projectId,
         userId: session.user.id
       },
       include: {
@@ -84,12 +92,20 @@ export async function PUT(
       );
     }
 
+    const projectId = parseInt(resolvedParams.id);
+    if (isNaN(projectId)) {
+      return NextResponse.json(
+        { error: "Invalid project ID" },
+        { status: 400 }
+      );
+    }
+
     const body = await request.json();
 
     // Verify that the project belongs to the authenticated user
     const existingProject = await db.project.findFirst({
       where: {
-        id: parseInt(resolvedParams.id),
+        id: projectId,
         userId: session.user.id
       }
     });
@@ -100,10 +116,10 @@ export async function PUT(
         { status: 404 }
       );
     }
-    
+
     const project = await db.project.update({
       where: {
-        id: parseInt(resolvedParams.id)
+        id: projectId
       },
       data: {
         name: body.name,
@@ -152,7 +168,7 @@ export async function PUT(
       // First, delete all existing project-tag associations
       await db.projectTag.deleteMany({
         where: {
-          projectId: parseInt(resolvedParams.id)
+          projectId: projectId
         }
       });
 
@@ -185,7 +201,7 @@ export async function PUT(
         const projectTagPromises = resolvedTags.map(tag =>
           db.projectTag.create({
             data: {
-              projectId: parseInt(resolvedParams.id),
+              projectId: projectId,
               tagId: tag.id
             }
           })
@@ -220,10 +236,18 @@ export async function DELETE(
       );
     }
 
+    const projectId = parseInt(resolvedParams.id);
+    if (isNaN(projectId)) {
+      return NextResponse.json(
+        { error: "Invalid project ID" },
+        { status: 400 }
+      );
+    }
+
     // Verify that the project belongs to the authenticated user
     const existingProject = await db.project.findFirst({
       where: {
-        id: parseInt(resolvedParams.id),
+        id: projectId,
         userId: session.user.id
       }
     });
@@ -234,10 +258,10 @@ export async function DELETE(
         { status: 404 }
       );
     }
-    
+
     await db.project.delete({
       where: {
-        id: parseInt(resolvedParams.id)
+        id: projectId
       }
     });
 
