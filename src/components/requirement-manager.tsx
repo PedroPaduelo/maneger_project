@@ -225,6 +225,39 @@ export function RequirementManager() {
     }
   };
 
+  const handleDeleteRequirement = async () => {
+    if (!confirm("Tem certeza que deseja deletar este requisito? Esta ação não pode ser desfeita.")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/requirements/${requirement?.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete requirement");
+      }
+
+      toast({
+        title: "Sucesso",
+        description: "Requisito deletado com sucesso.",
+      });
+
+      // Navigate back to the previous page after a short delay
+      setTimeout(() => {
+        router.back();
+      }, 500);
+    } catch (error) {
+      console.error("Error deleting requirement:", error);
+      toast({
+        title: "Erro",
+        description: "Falha ao deletar o requisito.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -278,10 +311,16 @@ export function RequirementManager() {
               </Button>
             </>
           ) : (
-            <Button onClick={() => setIsEditing(true)}>
-              <Edit className="h-4 w-4 mr-2" />
-              Editar
-            </Button>
+            <>
+              <Button variant="outline" onClick={() => setIsEditing(true)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Editar
+              </Button>
+              <Button variant="destructive" onClick={handleDeleteRequirement}>
+                <Trash2 className="h-4 w-4 mr-2" />
+                Deletar
+              </Button>
+            </>
           )}
         </div>
       </div>

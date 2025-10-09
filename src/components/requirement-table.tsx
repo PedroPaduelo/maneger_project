@@ -21,10 +21,12 @@ import {
   Target,
   ArrowUpDown,
   Edit,
+  Trash2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 import { EditRequirementDialog } from "@/components/edit-requirement-dialog";
 import { RequirementFilters } from "@/components/requirement-filters";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
@@ -47,6 +49,7 @@ interface RequirementTableProps {
 
 export function RequirementTable({ requirements, availableCategories }: RequirementTableProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = React.useState("");
@@ -136,6 +139,39 @@ export function RequirementTable({ requirements, availableCategories }: Requirem
 
   const handleRequirementUpdated = () => {
     window.location.reload();
+  };
+
+  const handleDeleteRequirement = async (requirementId: string) => {
+    if (!confirm("Tem certeza que deseja deletar este requisito? Esta ação não pode ser desfeita.")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/requirements/${requirementId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete requirement");
+      }
+
+      toast({
+        title: "Sucesso",
+        description: "Requisito deletado com sucesso.",
+      });
+
+      // Refresh the page after a short delay
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } catch (error) {
+      console.error("Error deleting requirement:", error);
+      toast({
+        title: "Erro",
+        description: "Falha ao deletar o requisito.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getPriorityColor = (priority: string) => {
@@ -293,7 +329,7 @@ export function RequirementTable({ requirements, availableCategories }: Requirem
       cell: ({ row }) => {
         const requirement = row.original;
         return (
-          <div className="flex items-center gap-2 min-w-[120px]">
+          <div className="flex items-center gap-2 min-w-[180px]">
             <EditRequirementDialog requirement={requirement} onRequirementUpdated={handleRequirementUpdated} />
             <Button
               variant="outline"
@@ -301,6 +337,14 @@ export function RequirementTable({ requirements, availableCategories }: Requirem
               onClick={() => handleViewDetails(requirement.id)}
             >
               Ver Detalhes
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleDeleteRequirement(requirement.id)}
+              className="h-8 w-8 p-0 text-destructive hover:text-destructive/80"
+            >
+              <Trash2 className="h-4 w-4" />
             </Button>
           </div>
         );

@@ -4,13 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Requirement } from "@/lib/types";
-import { 
-  Calendar, 
-  AlertTriangle, 
-  CheckCircle, 
+import {
+  Calendar,
+  AlertTriangle,
+  CheckCircle,
   FileText,
   Tag,
-  Target
+  Target,
+  Trash2
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -30,6 +31,39 @@ export function RequirementCard({ requirement }: RequirementCardProps) {
   const handleRequirementUpdated = () => {
     // Refresh the page or update the local state
     window.location.reload();
+  };
+
+  const handleDeleteRequirement = async () => {
+    if (!confirm("Tem certeza que deseja deletar este requisito? Esta ação não pode ser desfeita.")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/requirements/${requirement.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete requirement");
+      }
+
+      toast({
+        title: "Sucesso",
+        description: "Requisito deletado com sucesso.",
+      });
+
+      // Refresh the page after a short delay
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } catch (error) {
+      console.error("Error deleting requirement:", error);
+      toast({
+        title: "Erro",
+        description: "Falha ao deletar o requisito.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Função para extrair texto plano do markdown para o preview
@@ -113,10 +147,18 @@ export function RequirementCard({ requirement }: RequirementCardProps) {
             </CardDescription>
           </div>
           <div className="flex items-center gap-2 ml-2">
-            <EditRequirementDialog 
-              requirement={requirement} 
+            <EditRequirementDialog
+              requirement={requirement}
               onRequirementUpdated={handleRequirementUpdated}
             />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDeleteRequirement}
+              className="h-8 w-8 p-0 text-destructive hover:text-destructive/80"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
         </div>
         
