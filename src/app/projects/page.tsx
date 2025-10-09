@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProjectCard } from "@/components/project-card";
 import { ProjectActionsMenu } from "@/components/project-actions-menu";
+import { CreateProjectDialog } from "@/components/create-project-dialog";
 import {
   Plus,
   FolderKanban,
@@ -323,10 +324,7 @@ export default function ProjectsPage() {
                 Limpar
               </Button>
 
-              <Button>
-                <Plus className="h-4 w-4 mr-1" />
-                Novo Projeto
-              </Button>
+              <CreateProjectDialog onProjectCreated={handleProjectCreated} />
             </div>
 
             {/* Toggle Visualização */}
@@ -368,10 +366,7 @@ export default function ProjectsPage() {
                   : "Comece criando seu primeiro projeto para gerenciar seu trabalho."
                 }
               </p>
-              <Button onClick={() => window.location.href = "/project/new"}>
-                <Plus className="h-4 w-4 mr-2" />
-                Criar Projeto
-              </Button>
+              <CreateProjectDialog onProjectCreated={handleProjectCreated} />
             </CardContent>
           </Card>
         ) : (
