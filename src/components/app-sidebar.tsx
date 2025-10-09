@@ -193,11 +193,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {/* Ações Rápidas */}
         <div className="px-3 py-2">
           <div className="grid grid-cols-2 gap-1">
-            <Button size="sm" variant="outline" className="h-7 text-xs">
+            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => router.push('/projects/new')}>
               <Plus className="h-3 w-3 mr-1" />
               Projeto
             </Button>
-            <Button size="sm" variant="outline" className="h-7 text-xs">
+            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={handleRefresh}>
               <RefreshCw className="h-3 w-3 mr-1" />
               Atualizar
             </Button>
