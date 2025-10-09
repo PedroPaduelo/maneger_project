@@ -20,7 +20,8 @@ import {
   Trash2,
   GripVertical,
   MessageSquare,
-  Target
+  Target,
+  X
 } from "lucide-react";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { format } from "date-fns";
