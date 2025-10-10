@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Task } from "@/lib/types";
-import { TaskTable } from "@/components/task-table";
+import { TaskTableSimple } from "@/components/task-table-simple";
 import { TaskCard } from "@/components/task-card";
 import { TaskFilters } from "@/components/task-filters";
 
@@ -73,7 +73,7 @@ export function TaskListWithFilters({
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
+      {/* Filters - Show for both modes */}
       <TaskFilters
         searchTerm={searchTerm}
         onSearchTermChange={setSearchTerm}
@@ -112,11 +112,7 @@ export function TaskListWithFilters({
           ))}
         </div>
       ) : (
-        <TaskTable
-          tasks={tasks} // Pass original tasks to table so it can apply its own filters
-          availableCreators={availableCreators}
-          availableProjects={availableProjects}
-        />
+        <TaskTableSimple tasks={filteredData} />
       )}
     </div>
   );
