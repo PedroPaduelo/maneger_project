@@ -8,9 +8,18 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { CheckCircle2, Play, AlertCircle, ListChecks } from 'lucide-react'
 
+type SupportedActionType = 'create_project' | 'create_tasks'
+
 type ProposedAction =
-  | { type: 'create_project'; payload: any }
-  | { type: 'create_tasks'; payload: any }
+  | { type: 'create_project'; payload: any; metadata?: any }
+  | { type: 'create_tasks'; payload: any; metadata?: any }
+
+interface ProposedPlan {
+  version: number
+  summary?: string
+  notes?: string[]
+  actions: ProposedAction[]
+}
 
 interface AgentActionsBarProps {
   message: string
@@ -24,7 +33,7 @@ export function AgentActionsBar({ message }: AgentActionsBarProps) {
   const [createdProjectId, setCreatedProjectId] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const plan = useMemo(() => {
+  const plan = useMemo<ProposedPlan | null>(() => {
     const start = message.indexOf('<!--AGENT_ACTIONS_START-->')
     const end = message.indexOf('<!--AGENT_ACTIONS_END-->')
     if (start === -1 || end === -1) return null
@@ -32,7 +41,7 @@ export function AgentActionsBar({ message }: AgentActionsBarProps) {
       const raw = message.substring(start + '<!--AGENT_ACTIONS_START-->'.length, end)
       const data = JSON.parse(raw)
       if (!data || !Array.isArray(data.actions)) return null
-      return data as { version: number; actions: ProposedAction[] }
+      return data as ProposedPlan
     } catch (e) {
       return null
     }
@@ -50,10 +59,14 @@ export function AgentActionsBar({ message }: AgentActionsBarProps) {
 
   if (!plan) return null
 
-  const totalSteps = plan.actions.length
+  const totalSteps = plan.actions.filter((a) => isSupportedAction(a.type)).length
 
   const handleExecute = async () => {
     if (!plan) return
+    if (totalSteps === 0) {
+      toast.info('Nenhuma ação executável disponível neste plano.')
+      return
+    }
     setExecuting(true)
     setError(null)
     setStatus('Iniciando execução do plano...')
@@ -62,6 +75,11 @@ export function AgentActionsBar({ message }: AgentActionsBarProps) {
 
     try {
       for (const action of plan.actions) {
+        if (!isSupportedAction(action.type)) {
+          console.warn('[AgentActions] Ação ignorada (não suportada):', action.type)
+          continue
+        }
+
         currentStep += 1
         setStatus(`Executando etapa ${currentStep}/${totalSteps}: ${labelFromAction(action)}`)
         setProgress(Math.round(((currentStep - 1) / totalSteps) * 100))
@@ -78,11 +96,12 @@ export function AgentActionsBar({ message }: AgentActionsBarProps) {
           setCreatedProjectId(createdProjectId || null)
           toast.success(`Projeto criado: ${data.project?.name || createdProjectId}`)
         } else if (action.type === 'create_tasks') {
-          if (!createdProjectId) throw new Error('Projeto ainda não foi criado')
+          const targetProjectId = action.payload?.projectId || createdProjectId
+          if (!targetProjectId) throw new Error('Projeto alvo não definido para criação de tasks')
           const res = await fetch('/api/architect/create-tasks', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ projectId: createdProjectId, tasks: action.payload.tasks || [] })
+            body: JSON.stringify({ projectId: targetProjectId, tasks: action.payload.tasks || [] })
           })
           const data = await res.json()
           if (!res.ok) throw new Error(data.error || 'Falha ao criar tasks')
@@ -123,6 +142,22 @@ export function AgentActionsBar({ message }: AgentActionsBarProps) {
                   {' '}Projeto criado: <a className="underline" href={`/projects/${createdProjectId}`}>#{createdProjectId}</a>
                 </>
               )}
+            </div>
+          )}
+
+          {plan.summary && (
+            <div className="mt-3 text-xs text-muted-foreground">
+              <strong>Resumo:</strong> {plan.summary}
+            </div>
+          )}
+
+          {plan.notes && plan.notes.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {plan.notes.map((note, idx) => (
+                <div key={idx} className="text-xs text-muted-foreground">
+                  • {note}
+                </div>
+              ))}
             </div>
           )}
 
@@ -173,7 +208,12 @@ function labelFromAction(a: ProposedAction): string {
     return `Criar projeto “${a.payload?.name}” com ${a.payload?.requirements?.length || 0} requisito(s)`
   }
   if (a.type === 'create_tasks') {
-    return `Criar ${a.payload?.tasks?.length || 0} task(s) para o projeto`
+    const targetSuffix = a.payload?.projectId ? ` no projeto #${a.payload.projectId}` : ''
+    return `Criar ${a.payload?.tasks?.length || 0} task(s)${targetSuffix}`
   }
   return 'Ação'
+}
+
+function isSupportedAction(type: string): type is SupportedActionType {
+  return type === 'create_project' || type === 'create_tasks'
 }
