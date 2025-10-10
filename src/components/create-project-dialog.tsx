@@ -11,9 +11,9 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Plus, X, Check, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { DirectorySelector } from "@/components/directory-selector";
 import { MarkdownEditor } from "@/components/markdown-editor";
 import { useTags, useCreateTag } from "@/hooks/useTags";
+import { useCreateProject } from "@/hooks/useProjects";
 import { TagComponent, TagList } from "@/components/tag-component";
 
 interface CreateProjectDialogProps {
@@ -22,7 +22,6 @@ interface CreateProjectDialogProps {
 
 export function CreateProjectDialog({ onProjectCreated }: CreateProjectDialogProps) {
   const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -32,18 +31,19 @@ export function CreateProjectDialog({ onProjectCreated }: CreateProjectDialogPro
     priority: "Média",
     isFavorite: false,
     tags: [] as string[],
-    executionPath: "",
+    gitRepositoryUrl: "",
   });
   const [newTag, setNewTag] = useState("");
   const { toast } = useToast();
 
-  // Hooks para tags
+  // Hooks para tags e criação de projeto
   const { data: existingTags = [], isLoading: tagsLoading } = useTags();
   const createTagMutation = useCreateTag();
+  const createProjectMutation = useCreateProject();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       toast({
         title: "Erro",
@@ -53,29 +53,10 @@ export function CreateProjectDialog({ onProjectCreated }: CreateProjectDialogPro
       return;
     }
 
-    setLoading(true);
-    
     try {
-      const response = await fetch("/api/projects", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...formData,
-          tags: formData.tags.length > 0 ? formData.tags : undefined,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create project");
-      }
-
-      const project = await response.json();
-      
-      toast({
-        title: "Sucesso",
-        description: `Projeto "${project.name}" criado com sucesso.`,
+      await createProjectMutation.mutateAsync({
+        ...formData,
+        tags: formData.tags.length > 0 ? formData.tags : undefined,
       });
 
       // Reset form
@@ -88,22 +69,16 @@ export function CreateProjectDialog({ onProjectCreated }: CreateProjectDialogPro
         priority: "Média",
         isFavorite: false,
         tags: [],
-        executionPath: "",
+        gitRepositoryUrl: "",
       });
       setNewTag("");
       setOpen(false);
-      
+
       // Refresh projects list
       onProjectCreated();
     } catch (error) {
       console.error("Error creating project:", error);
-      toast({
-        title: "Erro",
-        description: "Falha ao criar projeto. Tente novamente.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+      // O erro já é tratado pelo hook useCreateProject
     }
   };
 
@@ -291,14 +266,16 @@ Desenvolver plataforma completa de e-commerce
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="executionPath">Diretório de Execução (Opcional)</Label>
-            <DirectorySelector
-              value={formData.executionPath}
-              onChange={(path) => setFormData(prev => ({ ...prev, executionPath: path }))}
-              placeholder="Selecione o diretório onde as tasks serão executadas..."
+            <Label htmlFor="gitRepositoryUrl">Repositório Git (Opcional)</Label>
+            <Input
+              id="gitRepositoryUrl"
+              value={formData.gitRepositoryUrl}
+              onChange={(e) => setFormData(prev => ({ ...prev, gitRepositoryUrl: e.target.value }))}
+              placeholder="https://github.com/usuario/repositorio.git"
+              type="url"
             />
             <p className="text-xs text-gray-500">
-              Diretório local onde os comandos das tasks serão executados. Pode ser configurado depois.
+              URL do repositório Git para clonar. Ex: https://github.com/usuario/repositorio.git
             </p>
           </div>
 
@@ -404,8 +381,8 @@ Desenvolver plataforma completa de e-commerce
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Criando..." : "Criar Projeto"}
+            <Button type="submit" disabled={createProjectMutation.isPending}>
+              {createProjectMutation.isPending ? "Criando..." : "Criar Projeto"}
             </Button>
           </DialogFooter>
         </form>

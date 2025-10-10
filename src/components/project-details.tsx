@@ -10,7 +10,6 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Project, Task, Requirement } from "@/lib/types";
 import {
-  ArrowLeft,
   Calendar,
   Clock,
   Star,
@@ -225,19 +224,14 @@ export function ProjectDetails() {
   const totalTasks = project.tasks.length;
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => router.push("/")}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">{project.name}</h1>
-            <p className="text-muted-foreground">
-              Gerenciamento detalhado do projeto
-            </p>
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">{project.name}</h1>
+          <p className="text-muted-foreground">
+            Gerenciamento detalhado do projeto
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -434,6 +428,7 @@ export function ProjectDetails() {
                 <TaskTable
                   tasks={project.tasks}
                   availableCreators={[...new Set(project.tasks.map(task => task.createdBy))]}
+                  availableProjects={[{ id: project.id, name: project.name }]}
                 />
               )}
             </>

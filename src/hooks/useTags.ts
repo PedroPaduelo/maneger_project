@@ -13,7 +13,7 @@ interface TagResponse {
   tag: Tag;
 }
 
-interface TagWithCount extends Tag {
+export interface TagWithCount extends Tag {
   _count: {
     projectTags: number;
   };

@@ -83,6 +83,7 @@ model User {
   projects         Project[]         @relation("ProjectOwner")
   notifications    Notification[]
   projectFavorites ProjectFavorite[]
+  createdTags      Tag[]             @relation("TagCreator")
 
   @@index([isActive])
   @@index([createdAt])
@@ -104,7 +105,7 @@ model Project {
   color            String?
   tags             String?
   metadata         Json?
-  executionPath    String?           @map("execution_path")
+  gitRepositoryUrl String?           @map("git_repository_url")
   createdAt        DateTime          @default(now()) @map("created_at")
   updatedAt        DateTime          @updatedAt @map("updated_at")
   historySummaries HistorySummary[]
@@ -244,11 +245,14 @@ model Tag {
   name        String       @unique
   color       String?
   description String?
+  createdBy   String?      @map("created_by")
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")
   projectTags ProjectTag[]
+  creator     User?        @relation("TagCreator", fields: [createdBy], references: [id])
 
   @@index([name], name: "idx_tag_name")
+  @@index([createdBy], name: "idx_tag_created_by")
   @@map("tbl_tag")
 }
 

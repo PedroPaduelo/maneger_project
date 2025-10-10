@@ -18,10 +18,20 @@ export async function GET(
       );
     }
 
+    // Check if ID parameter exists
+    if (!resolvedParams?.id) {
+      console.error("Missing project ID in params:", resolvedParams);
+      return NextResponse.json(
+        { error: "Project ID is required" },
+        { status: 400 }
+      );
+    }
+
     const projectId = parseInt(resolvedParams.id);
     if (isNaN(projectId)) {
+      console.error("Invalid project ID:", resolvedParams.id);
       return NextResponse.json(
-        { error: "Invalid project ID" },
+        { error: `Invalid project ID: ${resolvedParams.id}` },
         { status: 400 }
       );
     }
@@ -92,10 +102,20 @@ export async function PUT(
       );
     }
 
+    // Check if ID parameter exists
+    if (!resolvedParams?.id) {
+      console.error("Missing project ID in params:", resolvedParams);
+      return NextResponse.json(
+        { error: "Project ID is required" },
+        { status: 400 }
+      );
+    }
+
     const projectId = parseInt(resolvedParams.id);
     if (isNaN(projectId)) {
+      console.error("Invalid project ID:", resolvedParams.id);
       return NextResponse.json(
-        { error: "Invalid project ID" },
+        { error: `Invalid project ID: ${resolvedParams.id}` },
         { status: 400 }
       );
     }
@@ -132,7 +152,7 @@ export async function PUT(
         isFavorite: body.isFavorite,
         color: body.color,
         tags: body.tags ? JSON.stringify(body.tags) : null,
-        executionPath: body.executionPath
+        gitRepositoryUrl: body.gitRepositoryUrl
       },
       include: {
         tasks: {
@@ -236,10 +256,20 @@ export async function DELETE(
       );
     }
 
+    // Check if ID parameter exists
+    if (!resolvedParams?.id) {
+      console.error("Missing project ID in params:", resolvedParams);
+      return NextResponse.json(
+        { error: "Project ID is required" },
+        { status: 400 }
+      );
+    }
+
     const projectId = parseInt(resolvedParams.id);
     if (isNaN(projectId)) {
+      console.error("Invalid project ID:", resolvedParams.id);
       return NextResponse.json(
-        { error: "Invalid project ID" },
+        { error: `Invalid project ID: ${resolvedParams.id}` },
         { status: 400 }
       );
     }

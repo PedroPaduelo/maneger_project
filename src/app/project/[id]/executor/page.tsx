@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, use } from 'react';
+import { SidebarLayout } from '@/components/sidebar-layout';
 import { ProjectExecutorLayout } from '@/components/executor/ProjectExecutorLayout';
 import { ProjectHeader } from '@/components/executor/ProjectHeader';
 import { ControlPanel } from '@/components/executor/ControlPanel';
@@ -178,72 +179,82 @@ export default function ExecutorPage({ params }: ExecutorPageProps) {
   }
 
   return (
-    <ProjectExecutorLayout
-      project={project}
-      executionStatus={executionStatus}
+    <SidebarLayout
+      title="Task Executor"
+      breadcrumbs={[
+        { label: "Dashboard", href: "/" },
+        { label: "Projetos", href: "/projects" },
+        { label: project.name, href: `/project/${project.id}` },
+        { label: "Executor" }
+      ]}
     >
-      {/* Project Header */}
-      <ProjectHeader
+      <ProjectExecutorLayout
         project={project}
-        apiUrl={apiUrl}
-        onApiUrlChange={setApiUrl}
-        onSaveApiUrl={handleSaveApiUrl}
-      />
-
-      {/* Control Panel */}
-      <ControlPanel
-        onSearchTasks={handleSearchTasks}
-        onAddQuickTask={() => setQuickAddDialogOpen(true)}
-        onStartExecution={handleStartExecution}
-        onStopExecution={handleStopExecution}
-        isRunning={executionStatus === 'running' || executionStatus === 'pending'}
-        hasTasks={tasks.length > 0}
         executionStatus={executionStatus}
-        taskCount={selectedTaskIds.length > 0 ? selectedTaskIds.length : tasks.length}
-      />
-
-      {/* Progress Bar */}
-      {(execution || executionStatus !== 'idle') && (
-        <ExecutionProgress progress={progress} stats={stats || undefined} />
-      )}
-
-      {/* Tasks Table */}
-      <TasksTable
-        tasks={tasks}
-        selectedTasks={selectedTaskIds}
-        onTaskSelect={toggleTaskSelection}
-        onTaskSelectAll={selectAllTasks}
-        currentTaskId={execution?.currentTask?.id}
-      />
-
-      {/* Execution Log */}
-      <ExecutionLog
-        logs={execution?.logs || []}
-        isRunning={executionStatus === 'running'}
-        onClearLogs={handleClearLogs}
-        onExportLogs={handleExportLogs}
-        autoScroll={true}
-      />
-
-      {/* Quick Add Task Dialog */}
-      <QuickAddTaskDialog
-        open={quickAddDialogOpen}
-        onOpenChange={setQuickAddDialogOpen}
-        projectId={projectId}
-        onTaskAdded={(task) => {
-          addTask(task);
-          fetchTasks();
-        }}
-      />
-
-      {/* Sound Toggle Button (floating) */}
-      <button
-        onClick={toggleSound}
-        className="fixed bottom-6 right-6 rounded-full bg-primary p-4 text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors"
-        title={soundEnabled ? 'Desativar som' : 'Ativar som'}
       >
-        {soundEnabled ? '🔊' : '🔇'}
-      </button>
-    </ProjectExecutorLayout>
+        {/* Project Header */}
+        <ProjectHeader
+          project={project}
+          apiUrl={apiUrl}
+          onApiUrlChange={setApiUrl}
+          onSaveApiUrl={handleSaveApiUrl}
+        />
+
+        {/* Control Panel */}
+        <ControlPanel
+          onSearchTasks={handleSearchTasks}
+          onAddQuickTask={() => setQuickAddDialogOpen(true)}
+          onStartExecution={handleStartExecution}
+          onStopExecution={handleStopExecution}
+          isRunning={executionStatus === 'running' || executionStatus === 'pending'}
+          hasTasks={tasks.length > 0}
+          executionStatus={executionStatus}
+          taskCount={selectedTaskIds.length > 0 ? selectedTaskIds.length : tasks.length}
+        />
+
+        {/* Progress Bar */}
+        {(execution || executionStatus !== 'idle') && (
+          <ExecutionProgress progress={progress} stats={stats || undefined} />
+        )}
+
+        {/* Tasks Table */}
+        <TasksTable
+          tasks={tasks}
+          selectedTasks={selectedTaskIds}
+          onTaskSelect={toggleTaskSelection}
+          onTaskSelectAll={selectAllTasks}
+          currentTaskId={execution?.currentTask?.id}
+        />
+
+        {/* Execution Log */}
+        <ExecutionLog
+          logs={execution?.logs || []}
+          isRunning={executionStatus === 'running'}
+          onClearLogs={handleClearLogs}
+          onExportLogs={handleExportLogs}
+          autoScroll={true}
+        />
+
+        {/* Quick Add Task Dialog */}
+        <QuickAddTaskDialog
+          open={quickAddDialogOpen}
+          onOpenChange={setQuickAddDialogOpen}
+          projectId={projectId}
+          onTaskAdded={(task) => {
+            addTask(task);
+            fetchTasks();
+          }}
+        />
+
+        {/* Sound Toggle Button (floating) */}
+        <button
+          onClick={toggleSound}
+          className="fixed bottom-6 right-6 rounded-full bg-primary p-4 text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors"
+          title={soundEnabled ? 'Desativar som' : 'Ativar som'}
+        >
+          {soundEnabled ? '🔊' : '🔇'}
+        </button>
+      </ProjectExecutorLayout>
+    </SidebarLayout>
   );
 }

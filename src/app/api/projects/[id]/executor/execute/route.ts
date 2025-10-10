@@ -51,12 +51,12 @@ export async function POST(
       );
     }
 
-    // Verificar se projeto tem caminho de execução configurado
-    if (!project.executionPath) {
+    // Verificar se projeto tem repositório Git configurado
+    if (!project.gitRepositoryUrl) {
       return NextResponse.json(
         {
-          error: 'Diretório de execução não configurado',
-          message: 'Configure o diretório de execução do projeto antes de executar tasks. Vá em Editar Projeto → Diretório de Execução.'
+          error: 'Repositório Git não configurado',
+          message: 'Configure o repositório Git do projeto antes de executar tasks. Vá em Editar Projeto → Repositório Git.'
         },
         { status: 400 }
       );
@@ -112,7 +112,7 @@ export async function POST(
           id: uuidv4(),
           timestamp: new Date(),
           level: 'info',
-          message: `Execution path: ${project.executionPath}`,
+          message: `Git repository: ${project.gitRepositoryUrl}`,
         },
       ],
       tasks,
@@ -122,7 +122,7 @@ export async function POST(
     executions.set(executionId, execution);
 
     // Iniciar processamento assíncrono
-    processExecution(executionId, tasks, project.executionPath);
+    processExecution(executionId, tasks, project.gitRepositoryUrl);
 
     return NextResponse.json(execution, { status: 201 });
   } catch (error) {
@@ -134,11 +134,11 @@ export async function POST(
   }
 }
 
-// Função para processar execução localmente
+// Função para processar execução com repositório Git
 async function processExecution(
   executionId: string,
   tasks: any[],
-  executionPath: string
+  gitRepositoryUrl: string
 ) {
   const execution = executions.get(executionId);
   if (!execution) return;
@@ -168,8 +168,8 @@ async function processExecution(
     });
 
     try {
-      // Executar comandos da task localmente
-      const result = await executeTaskLocally(task, executionPath);
+      // Clonar repositório e executar comandos da task
+      const result = await executeTaskWithGit(task, gitRepositoryUrl);
 
       // Salvar resultado
       await db.task.update({
@@ -242,10 +242,10 @@ async function processExecution(
   executions.set(executionId, execution);
 }
 
-// Executar task localmente usando child_process
-async function executeTaskLocally(
+// Executar task clonando repositório Git
+async function executeTaskWithGit(
   task: any,
-  executionPath: string
+  gitRepositoryUrl: string
 ): Promise<{ output: string }> {
   try {
     // Extrair comandos do guidancePrompt
@@ -268,10 +268,10 @@ async function executeTaskLocally(
     }
 
     console.log('🚀 Iniciando execução do comando...');
-    console.log('📁 Diretório de execução:', executionPath);
+    console.log('📁 Repositório Git:', gitRepositoryUrl);
 
-    // Usar spawn em vez de exec para melhor controle
-    const result = await executeWithSpawn(commands, executionPath);
+    // Criar diretório temporário e clonar repositório
+    const result = await executeWithGitClone(commands, gitRepositoryUrl);
 
     return { output: result };
   } catch (error: any) {
@@ -289,72 +289,52 @@ async function executeTaskLocally(
   }
 }
 
-// Função alternativa usando spawn para melhor controle
-async function executeWithSpawn(command: string, cwd: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    console.log('🔥 Usando spawn para executar comando...');
+// Função para clonar repositório Git e executar comandos
+async function executeWithGitClone(command: string, gitUrl: string): Promise<string> {
+  const os = require('os');
+  const fs = require('fs').promises;
+  const path = require('path');
 
-    // Dividir o comando em partes
-    const parts = command.split(' ');
-    const cmd = parts[0];
-    const args = parts.slice(1);
+  // Criar diretório temporário
+  const tempDir = path.join(os.tmpdir(), `project-${Date.now()}`);
 
-    console.log('📝 Comando:', cmd);
-    console.log('📝 Args:', args);
+  try {
+    console.log('📁 Criando diretório temporário:', tempDir);
+    await fs.mkdir(tempDir, { recursive: true });
 
-    const child = spawn(cmd, args, {
-      cwd: cwd,
-      stdio: ['pipe', 'pipe', 'pipe'],
-      env: {
-        ...process.env,
-        FORCE_COLOR: '0'
-      }
-    });
+    // Extrair nome do repositório da URL
+    const repoName = gitUrl.split('/').pop().replace('.git', '');
+    const cloneDir = path.join(tempDir, repoName);
 
-    let stdout = '';
-    let stderr = '';
+    console.log('🔄 Clonando repositório:', gitUrl);
 
-    child.stdout?.on('data', (data) => {
-      const text = data.toString();
-      stdout += text;
-      console.log('📊 Stdout chunk:', text.length, 'caracteres');
-    });
+    // Clonar repositório
+    await execAsync(`git clone "${gitUrl}" "${cloneDir}"`, { cwd: tempDir });
 
-    child.stderr?.on('data', (data) => {
-      const text = data.toString();
-      stderr += text;
-      console.log('⚠️ Stderr chunk:', text.length, 'caracteres');
-    });
+    console.log('✅ Repositório clonado com sucesso');
+    console.log('🚀 Executando comando no repositório clonado...');
 
-    child.on('error', (error) => {
-      console.log('❌ Erro no processo:', error);
-      reject(error);
-    });
+    // Executar comando no diretório clonado
+    const result = await execAsync(command, { cwd: cloneDir });
 
-    child.on('close', (code) => {
-      console.log(`🏁 Processo finalizado com código: ${code}`);
-      console.log('📊 Tamanho total stdout:', stdout.length);
-      console.log('📊 Tamanho total stderr:', stderr.length);
+    console.log('✅ Comando executado com sucesso');
 
-      if (code === 0) {
-        const output = [stdout, stderr].filter(Boolean).join('\n');
-        resolve(output);
-      } else {
-        reject(new Error(`Command failed with exit code ${code}\nStderr: ${stderr}`));
-      }
-    });
+    // Limpar diretório temporário
+    await fs.rm(tempDir, { recursive: true, force: true });
+    console.log('🧹 Diretório temporário removido');
 
-    // Timeout manual
-    const timeout = setTimeout(() => {
-      console.log('⏰ Timeout alcançado, matando processo...');
-      child.kill('SIGKILL');
-      reject(new Error('Execution timeout (4 hours)'));
-    }, 14400000); // 4 horas
+    return result.stdout + (result.stderr ? '\n' + result.stderr : '');
 
-    child.on('close', () => {
-      clearTimeout(timeout);
-    });
-  });
+  } catch (error: any) {
+    // Limpar diretório temporário em caso de erro
+    try {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    } catch (cleanupError) {
+      console.log('Erro ao limpar diretório temporário:', cleanupError);
+    }
+
+    throw error;
+  }
 }
 
 // Verificar se deve usar comando Claude

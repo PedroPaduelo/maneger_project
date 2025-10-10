@@ -28,8 +28,11 @@ export interface TaskFiltersProps {
   onHasTodosFilterChange: (filter: string) => void;
   createdByFilter: string;
   onCreatedByFilterChange: (filter: string) => void;
+  projectFilter: string;
+  onProjectFilterChange: (filter: string) => void;
   resetFilters: () => void;
   availableCreators: string[];
+  availableProjects: Array<{ id: number; name: string }>;
 }
 
 const STATUS_OPTIONS = [
@@ -49,6 +52,10 @@ const CREATED_BY_OPTIONS = [
   { value: "all", label: "Todos" },
 ];
 
+const PROJECT_OPTIONS = [
+  { value: "all", label: "Todos" },
+];
+
 export function TaskFilters({
   searchTerm,
   onSearchTermChange,
@@ -58,20 +65,30 @@ export function TaskFilters({
   onHasTodosFilterChange,
   createdByFilter,
   onCreatedByFilterChange,
+  projectFilter,
+  onProjectFilterChange,
   resetFilters,
   availableCreators,
+  availableProjects,
 }: TaskFiltersProps) {
 
   // Atualizar opções de criadores dinamicamente
   const createdByOptions = [
     ...CREATED_BY_OPTIONS,
-    ...availableCreators.map(creator => ({ value: creator, label: creator })),
+    ...(availableCreators || []).map(creator => ({ value: creator, label: creator })),
+  ];
+
+  // Atualizar opções de projetos dinamicamente
+  const projectOptions = [
+    ...PROJECT_OPTIONS,
+    ...(availableProjects || []).map(project => ({ value: project.id.toString(), label: project.name })),
   ];
 
   const hasActiveFilters = searchTerm ||
     statusFilter.length > 0 ||
     hasTodosFilter !== "all" ||
-    createdByFilter !== "all";
+    createdByFilter !== "all" ||
+    projectFilter !== "all";
 
   const handleStatusToggle = (status: string) => {
     const newStatusFilter = statusFilter.includes(status)
@@ -101,7 +118,7 @@ export function TaskFilters({
         )}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -138,6 +155,22 @@ export function TaskFilters({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+        </div>
+
+        {/* Project Filter */}
+        <div>
+          <Select value={projectFilter} onValueChange={onProjectFilterChange}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Projeto" />
+            </SelectTrigger>
+            <SelectContent>
+              {projectOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Has Todos Filter */}
@@ -203,6 +236,17 @@ export function TaskFilters({
               {HAS_TODOS_OPTIONS.find(opt => opt.value === hasTodosFilter)?.label}
               <button
                 onClick={() => onHasTodosFilterChange("all")}
+                className="ml-1 hover:text-destructive"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          )}
+          {projectFilter !== "all" && (
+            <Badge variant="outline" className="flex items-center gap-1">
+              Projeto: {projectOptions.find(opt => opt.value === projectFilter)?.label}
+              <button
+                onClick={() => onProjectFilterChange("all")}
                 className="ml-1 hover:text-destructive"
               >
                 <X className="h-3 w-3" />

@@ -30,7 +30,7 @@ import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
 import { useSession, signOut } from "next-auth/react"
 import { useTheme } from "next-themes"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 import {
   Sidebar,
   SidebarContent,
@@ -64,7 +64,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const router = useRouter()
   const { data: session } = useSession()
   const { theme, setTheme } = useTheme()
-  const { toast } = useToast()
 
   // Dados de navegação baseados nas abas antigas
   const navigationData = [
@@ -303,9 +302,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       {session?.user?.email}
                     </p>
                   </div>
-                  <SidebarMenuAction className="ml-auto">
+                  <div className="ml-auto">
                     <div className="w-4 h-4 border-2 border-current rounded-full" />
-                  </SidebarMenuAction>
+                  </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent

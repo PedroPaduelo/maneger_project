@@ -45,9 +45,10 @@ import {
 interface TaskTableProps {
   tasks: Task[];
   availableCreators: string[];
+  availableProjects: Array<{ id: number; name: string }>;
 }
 
-export function TaskTable({ tasks, availableCreators }: TaskTableProps) {
+export function TaskTable({ tasks, availableCreators, availableProjects }: TaskTableProps) {
   const router = useRouter();
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -57,6 +58,7 @@ export function TaskTable({ tasks, availableCreators }: TaskTableProps) {
   const [statusFilter, setStatusFilter] = React.useState<string[]>([]);
   const [hasTodosFilter, setHasTodosFilter] = React.useState("all");
   const [createdByFilter, setCreatedByFilter] = React.useState("all");
+  const [projectFilter, setProjectFilter] = React.useState("all");
 
   // Apply filters to the data
   const filteredData = React.useMemo(() => {
@@ -88,8 +90,13 @@ export function TaskTable({ tasks, availableCreators }: TaskTableProps) {
       filtered = filtered.filter((task) => task.createdBy === createdByFilter);
     }
 
+    // Project filter
+    if (projectFilter !== "all") {
+      filtered = filtered.filter((task) => task.projectId.toString() === projectFilter);
+    }
+
     return filtered;
-  }, [tasks, globalFilter, statusFilter, hasTodosFilter, createdByFilter]);
+  }, [tasks, globalFilter, statusFilter, hasTodosFilter, createdByFilter, projectFilter]);
 
   // Update global filter when search term changes
   React.useEffect(() => {
@@ -342,6 +349,7 @@ export function TaskTable({ tasks, availableCreators }: TaskTableProps) {
     setStatusFilter([]);
     setHasTodosFilter("all");
     setCreatedByFilter("all");
+    setProjectFilter("all");
     setColumnFilters([]);
   };
 
@@ -357,8 +365,11 @@ export function TaskTable({ tasks, availableCreators }: TaskTableProps) {
         onHasTodosFilterChange={setHasTodosFilter}
         createdByFilter={createdByFilter}
         onCreatedByFilterChange={setCreatedByFilter}
+        projectFilter={projectFilter}
+        onProjectFilterChange={setProjectFilter}
         resetFilters={resetFilters}
         availableCreators={availableCreators}
+        availableProjects={availableProjects}
       />
 
       <div className="rounded-md border">

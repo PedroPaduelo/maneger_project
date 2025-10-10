@@ -12,7 +12,6 @@ import { Project } from "@/lib/types";
 import { Edit, Save, X, Plus, Trash2, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useUpdateProject } from "@/hooks";
-import { DirectorySelector } from "@/components/directory-selector";
 import { MarkdownEditor } from "@/components/markdown-editor";
 import { useTags, useCreateTag } from "@/hooks/useTags";
 import { TagComponent } from "@/components/tag-component";
@@ -50,7 +49,7 @@ export function EditProjectDialog({ project, onProjectUpdated, trigger }: EditPr
     priority: project.priority,
     isFavorite: project.isFavorite,
     tags: parseTags(project.tags),
-    executionPath: (project as any).executionPath || ""
+    gitRepositoryUrl: (project as any).gitRepositoryUrl || ""
   });
 
   const [newTag, setNewTag] = useState("");
@@ -183,14 +182,16 @@ export function EditProjectDialog({ project, onProjectUpdated, trigger }: EditPr
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="executionPath">Diretório de Execução</Label>
-            <DirectorySelector
-              value={formData.executionPath}
-              onChange={(path) => setFormData({ ...formData, executionPath: path })}
-              placeholder="Selecione o diretório onde as tasks serão executadas..."
+            <Label htmlFor="gitRepositoryUrl">Repositório Git</Label>
+            <Input
+              id="gitRepositoryUrl"
+              value={formData.gitRepositoryUrl}
+              onChange={(e) => setFormData({ ...formData, gitRepositoryUrl: e.target.value })}
+              placeholder="https://github.com/usuario/repositorio.git"
+              type="url"
             />
             <p className="text-xs text-gray-500">
-              Diretório onde os comandos das tasks serão executados localmente
+              URL do repositório Git para clonar. Ex: https://github.com/usuario/repositorio.git
             </p>
           </div>
 

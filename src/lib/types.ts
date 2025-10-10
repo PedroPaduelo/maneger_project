@@ -44,6 +44,7 @@ export interface Project {
   color?: string;
   tags?: string;
   metadata?: any;
+  gitRepositoryUrl?: string;
   createdAt: Date;
   updatedAt: Date;
   historySummaries: HistorySummary[];

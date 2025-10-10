@@ -1,8 +1,9 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useTasksQuery } from "@/hooks";
+import { useTasksQuery, useProjects } from "@/hooks";
 import { SidebarLayout } from "@/components/sidebar-layout";
+import { TaskTable } from "@/components/task-table";
 import { Button } from "@/components/ui/button";
 import { Plus, CheckSquare } from "lucide-react";
 
@@ -13,6 +14,20 @@ export default function TasksPage() {
     isLoading: tasksLoading,
     error: tasksError
   } = useTasksQuery();
+
+  const {
+    data: projects = [],
+    isLoading: projectsLoading
+  } = useProjects();
+
+  // Extrair criadores únicos das tarefas
+  const availableCreators = Array.from(new Set(tasks.map(task => task.createdBy)));
+
+  // Preparar lista de projetos para o filtro
+  const availableProjects = projects.map(project => ({
+    id: project.id,
+    name: project.name
+  }));
 
   if (status === "loading" || tasksLoading) {
     return (
@@ -80,35 +95,11 @@ export default function TasksPage() {
             </div>
           </div>
         ) : (
-          <div className="bg-card rounded-lg border">
-            <div className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Lista de Tarefas</h3>
-              <div className="space-y-4">
-                {tasks.map((task: any) => (
-                  <div key={task.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                    <div>
-                      <h4 className="font-medium">{task.title}</h4>
-                      <p className="text-sm text-muted-foreground">{task.description}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        task.status === 'completed' ? 'bg-green-100 text-green-800' :
-                        task.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {task.status === 'completed' ? 'Concluída' :
-                         task.status === 'in_progress' ? 'Em Progresso' :
-                         'Pendente'}
-                      </span>
-                      <Button variant="outline" size="sm">
-                        Ver Detalhes
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <TaskTable
+            tasks={tasks}
+            availableCreators={availableCreators}
+            availableProjects={availableProjects}
+          />
         )}
       </div>
     </SidebarLayout>

@@ -6,6 +6,7 @@ export {
   useUpdateProject,
   useDeleteProject,
   useToggleFavorite,
+  useDuplicateProject,
   projectKeys
 } from './useProjects';
 

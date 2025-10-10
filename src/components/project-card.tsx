@@ -28,6 +28,7 @@ import { EditProjectDialog } from "@/components/edit-project-dialog";
 import { DeleteProjectDialog } from "@/components/delete-project-dialog";
 import { MarkdownRenderer } from "@/components/markdown-renderer";
 import { TagList } from "@/components/tag-component";
+import { DuplicateProjectButton } from "@/components/duplicate-project-button";
 
 interface ProjectCardProps {
   project: Project;
@@ -154,6 +155,7 @@ function ProjectCardComponent({ project }: ProjectCardProps) {
                   : 'text-muted-foreground hover:text-yellow-500 hover:fill-current'
               }`} />
             </Button>
+            <DuplicateProjectButton projectId={project.id} projectName={project.name} />
             <EditProjectDialog project={project} onProjectUpdated={handleProjectUpdated} />
             <DeleteProjectDialog project={project} onProjectDeleted={handleProjectDeleted} />
           </div>

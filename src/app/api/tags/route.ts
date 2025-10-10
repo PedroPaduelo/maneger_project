@@ -5,16 +5,34 @@ import { db } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const withCount = searchParams.get("withCount") === "true";
 
     if (withCount) {
-      // Get tags with project count
+      // Get tags created by user with project count (only from user's projects)
       const tags = await db.tag.findMany({
+        where: {
+          createdBy: session.user.id
+        },
         include: {
           _count: {
             select: {
-              projectTags: true
+              projectTags: {
+                where: {
+                  project: {
+                    userId: session.user.id
+                  }
+                }
+              }
             }
           }
         },
@@ -25,8 +43,11 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({ tags });
     } else {
-      // Get tags without count
+      // Get tags created by user
       const tags = await db.tag.findMany({
+        where: {
+          createdBy: session.user.id
+        },
         orderBy: [
           { name: "asc" }
         ]
@@ -45,6 +66,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
 
     // Check if tag already exists
@@ -66,6 +96,7 @@ export async function POST(request: NextRequest) {
         name: body.name,
         color: body.color,
         description: body.description,
+        createdBy: session.user.id,
       },
       include: {
         projectTags: {

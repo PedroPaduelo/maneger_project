@@ -237,7 +237,7 @@ export default function TagsPage() {
         { label: "Tags" }
       ]}
     >
-      <div className="space-y-6 max-w-7xl">
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -250,48 +250,367 @@ export default function TagsPage() {
             </p>
           </div>
 
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Tag
-            </Button>
-          </DialogTrigger>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Tag
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Criar Nova Tag</DialogTitle>
+                <DialogDescription>
+                  Crie uma nova tag para categorizar seus projetos.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nome *</Label>
+                  <Input
+                    id="name"
+                    value={createForm.name}
+                    onChange={(e) => setCreateForm(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="Ex: Frontend, Backend, Urgente"
+                    disabled={createTagMutation.isPending}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Descrição</Label>
+                  <Textarea
+                    id="description"
+                    value={createForm.description}
+                    onChange={(e) => setCreateForm(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Descreva o propósito desta tag..."
+                    rows={3}
+                    disabled={createTagMutation.isPending}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="color">Cor</Label>
+                  <Select
+                    value={createForm.color}
+                    onValueChange={(value) => setCreateForm(prev => ({ ...prev, color: value }))}
+                    disabled={createTagMutation.isPending}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma cor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TAG_COLORS.map((color) => (
+                        <SelectItem key={color.value} value={color.value}>
+                          <div className="flex items-center gap-2">
+                            <div className={`w-4 h-4 rounded ${color.preview.split(' ')[0]}`} />
+                            <span>{color.label}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {createForm.color && (
+                    <div className="mt-2">
+                      <TagComponent
+                        tag={{ name: createForm.name || 'Nome da Tag', color: createForm.color } as TagWithCount}
+                        size="sm"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsCreateDialogOpen(false)}
+                  disabled={createTagMutation.isPending}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleCreateTag}
+                  disabled={createTagMutation.isPending}
+                >
+                  {createTagMutation.isPending ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
+                  ) : (
+                    'Criar Tag'
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <Card className="bg-card border-border hover:bg-accent/50 transition-all duration-300 hover:shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total de Tags</CardTitle>
+              <div className="bg-primary/20 p-2 rounded-lg">
+                <TagIcon className="h-4 w-4 text-primary" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{tags.length}</div>
+              <p className="text-xs text-muted-foreground">
+                Tags cadastradas no sistema
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card border-border hover:bg-accent/50 transition-all duration-300 hover:shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Tags em Uso</CardTitle>
+              <div className="bg-green-500/20 p-2 rounded-lg">
+                <Folder className="h-4 w-4 text-green-500" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {tags.filter(tag => tag._count.projectTags > 0).length}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Tags associadas a projetos
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card border-border hover:bg-accent/50 transition-all duration-300 hover:shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Média por Tag</CardTitle>
+              <div className="bg-purple-500/20 p-2 rounded-lg">
+                <Palette className="h-4 w-4 text-purple-500" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {tags.length > 0
+                  ? (tags.reduce((acc, tag) => acc + tag._count.projectTags, 0) / tags.length).toFixed(1)
+                  : '0'
+                }
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Projetos por tag (média)
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Search and Filters */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filtros
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center space-x-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar tags por nome ou descrição..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setSearchTerm('')}
+                disabled={!searchTerm}
+              >
+                Limpar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tags Table */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle>Tags Cadastradas</CardTitle>
+            <CardDescription>
+              {filteredTags.length} tag{filteredTags.length !== 1 ? 's' : ''} encontrada{filteredTags.length !== 1 ? 's' : ''}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="space-y-4">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <div key={index} className="flex items-center space-x-4">
+                    <div className="animate-pulse bg-gray-200 h-8 w-24 rounded"></div>
+                    <div className="animate-pulse bg-gray-200 h-8 flex-1 rounded"></div>
+                    <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div>
+                    <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredTags.length === 0 ? (
+              <div className="text-center py-12">
+                <TagIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium mb-2">
+                  {searchTerm ? 'Nenhuma tag encontrada' : 'Nenhuma tag cadastrada'}
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  {searchTerm
+                    ? 'Tente ajustar seus termos de busca.'
+                    : 'Comece criando sua primeira tag para organizar seus projetos.'
+                  }
+                </p>
+                {!searchTerm && (
+                  <Button onClick={() => setIsCreateDialogOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Criar Primeira Tag
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="rounded-md border border-border">
+                <Table>
+                  <TableHeader className="bg-muted/50">
+                    <TableRow className="border-border hover:bg-muted/30">
+                      <TableHead className="text-muted-foreground font-semibold">Tag</TableHead>
+                      <TableHead className="text-muted-foreground font-semibold">Descrição</TableHead>
+                      <TableHead className="text-muted-foreground font-semibold">Cor</TableHead>
+                      <TableHead className="text-muted-foreground font-semibold">Projetos</TableHead>
+                      <TableHead className="text-muted-foreground font-semibold">Criada em</TableHead>
+                      <TableHead className="text-muted-foreground font-semibold text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredTags.map((tag) => (
+                      <TableRow key={tag.id} className="border-border hover:bg-accent/50 transition-colors">
+                        <TableCell>
+                          <TagComponent
+                            tag={tag}
+                            size="sm"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-muted-foreground">
+                            {tag.description || '-'}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`w-6 h-6 rounded border-2 ${
+                                tag.color ? getTagColor(tag.color).split(' ')[0] : 'bg-gray-100'
+                              }`}
+                            />
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium capitalize">
+                                {tag.color || 'Padrão'}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {tag.color
+                                  ? TAG_COLORS.find(c => c.value === tag.color)?.label || tag.color
+                                  : 'Sem cor definida'
+                                }
+                              </span>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">
+                            {tag._count.projectTags} projeto{tag._count.projectTags !== 1 ? 's' : ''}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-muted-foreground">
+                            {new Date(tag.createdAt).toLocaleDateString('pt-BR')}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openEditDialog(tag)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={tag._count.projectTags > 0}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Excluir Tag</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tem certeza que deseja excluir a tag "{tag.name}"?
+                                    {tag._count.projectTags > 0 && (
+                                      <span className="text-destructive block mt-2">
+                                        Esta tag não pode ser excluída pois está sendo usada em {tag._count.projectTags} projeto{tag._count.projectTags !== 1 ? 's' : ''}.
+                                      </span>
+                                    )}
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteTag(tag.id)}
+                                    disabled={tag._count.projectTags > 0}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    Excluir
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Criar Nova Tag</DialogTitle>
+              <DialogTitle>Editar Tag</DialogTitle>
               <DialogDescription>
-                Crie uma nova tag para categorizar seus projetos.
+                Atualize as informações da tag "{editingTag?.name}".
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Nome *</Label>
+                <Label htmlFor="edit-name">Nome *</Label>
                 <Input
-                  id="name"
-                  value={createForm.name}
-                  onChange={(e) => setCreateForm(prev => ({ ...prev, name: e.target.value }))}
+                  id="edit-name"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="Ex: Frontend, Backend, Urgente"
-                  disabled={createTagMutation.isPending}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="description">Descrição</Label>
+                <Label htmlFor="edit-description">Descrição</Label>
                 <Textarea
-                  id="description"
-                  value={createForm.description}
-                  onChange={(e) => setCreateForm(prev => ({ ...prev, description: e.target.value }))}
+                  id="edit-description"
+                  value={editForm.description}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Descreva o propósito desta tag..."
                   rows={3}
-                  disabled={createTagMutation.isPending}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="color">Cor</Label>
+                <Label htmlFor="edit-color">Cor</Label>
                 <Select
-                  value={createForm.color}
-                  onValueChange={(value) => setCreateForm(prev => ({ ...prev, color: value }))}
-                  disabled={createTagMutation.isPending}
+                  value={editForm.color}
+                  onValueChange={(value) => setEditForm(prev => ({ ...prev, color: value }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione uma cor" />
@@ -307,10 +626,10 @@ export default function TagsPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                {createForm.color && (
+                {editForm.color && (
                   <div className="mt-2">
                     <TagComponent
-                      tag={{ name: createForm.name || 'Nome da Tag', color: createForm.color } as TagWithCount}
+                      tag={{ name: editForm.name || 'Nome da Tag', color: editForm.color } as TagWithCount}
                       size="sm"
                     />
                   </div>
@@ -321,335 +640,24 @@ export default function TagsPage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setIsCreateDialogOpen(false)}
-                disabled={createTagMutation.isPending}
+                onClick={() => setIsEditDialogOpen(false)}
               >
                 Cancelar
               </Button>
               <Button
                 type="button"
-                onClick={handleCreateTag}
-                disabled={createTagMutation.isPending}
+                onClick={handleEditTag}
+                disabled={updateTagMutation.isPending}
               >
-                {createTagMutation.isPending ? (
+                {updateTagMutation.isPending ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
                 ) : (
-                  'Criar Tag'
+                  'Salvar Alterações'
                 )}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Tags</CardTitle>
-            <TagIcon className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{tags.length}</div>
-            <p className="text-xs text-muted-foreground">
-              Tags cadastradas no sistema
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tags em Uso</CardTitle>
-            <Folder className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {tags.filter(tag => tag._count.projectTags > 0).length}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Tags associadas a projetos
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Média por Tag</CardTitle>
-            <Palette className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {tags.length > 0
-                ? (tags.reduce((acc, tag) => acc + tag._count.projectTags, 0) / tags.length).toFixed(1)
-                : '0'
-              }
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Projetos por tag (média)
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Search and Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filtros
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center space-x-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar tags por nome ou descrição..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8"
-              />
-            </div>
-            <Button
-              variant="outline"
-              onClick={() => setSearchTerm('')}
-              disabled={!searchTerm}
-            >
-              Limpar
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Tags Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Tags Cadastradas</CardTitle>
-          <CardDescription>
-            {filteredTags.length} tag{filteredTags.length !== 1 ? 's' : ''} encontrada{filteredTags.length !== 1 ? 's' : ''}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="space-y-4">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="flex items-center space-x-4">
-                  <div className="animate-pulse bg-gray-200 h-8 w-24 rounded"></div>
-                  <div className="animate-pulse bg-gray-200 h-8 flex-1 rounded"></div>
-                  <div className="animate-pulse bg-gray-200 h-8 w-16 rounded"></div>
-                  <div className="animate-pulse bg-gray-200 h-8 w-20 rounded"></div>
-                </div>
-              ))}
-            </div>
-          ) : filteredTags.length === 0 ? (
-            <div className="text-center py-12">
-              <TagIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">
-                {searchTerm ? 'Nenhuma tag encontrada' : 'Nenhuma tag cadastrada'}
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                {searchTerm
-                  ? 'Tente ajustar seus termos de busca.'
-                  : 'Comece criando sua primeira tag para organizar seus projetos.'
-                }
-              </p>
-              {!searchTerm && (
-                <Button onClick={() => setIsCreateDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Criar Primeira Tag
-                </Button>
-              )}
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Tag</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Cor</TableHead>
-                  <TableHead>Projetos</TableHead>
-                  <TableHead>Criada em</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredTags.map((tag) => (
-                  <TableRow key={tag.id}>
-                    <TableCell>
-                      <TagComponent
-                        tag={tag}
-                        size="sm"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-muted-foreground">
-                        {tag.description || '-'}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={`w-6 h-6 rounded border-2 ${
-                            tag.color ? getTagColor(tag.color).split(' ')[0] : 'bg-gray-100'
-                          }`}
-                        />
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium capitalize">
-                            {tag.color || 'Padrão'}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {tag.color
-                              ? TAG_COLORS.find(c => c.value === tag.color)?.label || tag.color
-                              : 'Sem cor definida'
-                            }
-                          </span>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
-                        {tag._count.projectTags} projeto{tag._count.projectTags !== 1 ? 's' : ''}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-muted-foreground">
-                        {new Date(tag.createdAt).toLocaleDateString('pt-BR')}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openEditDialog(tag)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              disabled={tag._count.projectTags > 0}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Excluir Tag</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Tem certeza que deseja excluir a tag "{tag.name}"?
-                                {tag._count.projectTags > 0 && (
-                                  <span className="text-destructive block mt-2">
-                                    Esta tag não pode ser excluída pois está sendo usada em {tag._count.projectTags} projeto{tag._count.projectTags !== 1 ? 's' : ''}.
-                                  </span>
-                                )}
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteTag(tag.id)}
-                                disabled={tag._count.projectTags > 0}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
-                                Excluir
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Editar Tag</DialogTitle>
-            <DialogDescription>
-              Atualize as informações da tag "{editingTag?.name}".
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-name">Nome *</Label>
-              <Input
-                id="edit-name"
-                value={editForm.name}
-                onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Ex: Frontend, Backend, Urgente"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-description">Descrição</Label>
-              <Textarea
-                id="edit-description"
-                value={editForm.description}
-                onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Descreva o propósito desta tag..."
-                rows={3}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-color">Cor</Label>
-              <Select
-                value={editForm.color}
-                onValueChange={(value) => setEditForm(prev => ({ ...prev, color: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma cor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TAG_COLORS.map((color) => (
-                    <SelectItem key={color.value} value={color.value}>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-4 h-4 rounded ${color.preview.split(' ')[0]}`} />
-                        <span>{color.label}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {editForm.color && (
-                <div className="mt-2">
-                  <TagComponent
-                    tag={{ name: editForm.name || 'Nome da Tag', color: editForm.color } as TagWithCount}
-                    size="sm"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsEditDialogOpen(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="button"
-              onClick={handleEditTag}
-              disabled={updateTagMutation.isPending}
-            >
-              {updateTagMutation.isPending ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current" />
-              ) : (
-                'Salvar Alterações'
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
       </div>
     </SidebarLayout>
   );

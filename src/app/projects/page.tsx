@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { useProjects } from "@/hooks";
+import { useProjects, useCreateProject } from "@/hooks";
 import { SidebarLayout } from "@/components/sidebar-layout";
 import { SimpleDashboard } from "@/components/simple-dashboard";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ProjectCard } from "@/components/project-card";
 import { ProjectActionsMenu } from "@/components/project-actions-menu";
 import { CreateProjectDialog } from "@/components/create-project-dialog";
+import { DuplicateProjectButton } from "@/components/duplicate-project-button";
 import {
   Plus,
   FolderKanban,
@@ -66,12 +67,15 @@ export default function ProjectsPage() {
   const {
     data: projects = [],
     isLoading: projectsLoading,
-    error: projectsError
+    error: projectsError,
+    refetch: refetchProjects
   } = useProjects({
     search: searchTerm,
     status: statusFilter !== "all" ? statusFilter : undefined,
     priority: priorityFilter !== "all" ? priorityFilter : undefined,
   });
+
+  const createProjectMutation = useCreateProject();
 
   // Filtragem local
   const filteredProjects = projects.filter((project: any) => {
@@ -99,10 +103,10 @@ export default function ProjectsPage() {
   });
 
   const handleProjectCreated = useCallback(() => {
-    toast.success("Projeto criado", {
-      description: "O projeto foi criado com sucesso.",
-    });
-  }, [toast]);
+    // A lista será atualizada automaticamente pelo hook useCreateProject
+    // Mas também podemos forçar uma recarga se necessário
+    refetchProjects();
+  }, [refetchProjects]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -506,6 +510,7 @@ export default function ProjectsPage() {
                                     : 'text-muted-foreground hover:text-yellow-500 hover:fill-current'
                                 }`} />
                               </Button>
+                              <DuplicateProjectButton projectId={project.id} projectName={project.name} />
                               <ProjectActionsMenu
                                 project={project}
                                 variant="horizontal"

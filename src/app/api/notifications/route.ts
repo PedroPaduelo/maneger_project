@@ -1,23 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
-    let userId = searchParams.get("userId") || "system";
     const unreadOnly = searchParams.get("unreadOnly") === "true";
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");
 
     const skip = (page - 1) * limit;
-
-    // Get the first available user if userId is "system" or invalid
-    if (!userId || userId === "system") {
-      const firstUser = await db.user.findFirst({
-        select: { id: true }
-      });
-      userId = firstUser?.id || "system";
-    }
+    const userId = session.user.id;
 
     const where: any = {
       userId
@@ -75,16 +78,17 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const session = await getServerSession(authOptions);
 
-    // Get the first available user if userId is "system" or invalid
-    let userId = body.userId;
-    if (!userId || userId === "system") {
-      const firstUser = await db.user.findFirst({
-        select: { id: true }
-      });
-      userId = firstUser?.id || "system";
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
+
+    const body = await request.json();
+    const userId = session.user.id;
 
     const notification = await db.notification.create({
       data: {

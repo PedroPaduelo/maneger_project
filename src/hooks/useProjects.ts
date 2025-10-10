@@ -87,8 +87,9 @@ export function useCreateProject() {
         throw new Error('Failed to create project');
       }
 
-      const data: ProjectResponse = await response.json();
-      return data.project;
+      const data = await response.json();
+      // A API retorna o projeto diretamente, não wrapped em { project: ... }
+      return data.project || data;
     },
     onMutate: async (newProject) => {
       // Cancelar queries em andamento
@@ -128,6 +129,15 @@ export function useCreateProject() {
     onSuccess: (project) => {
       // Invalidar para buscar dados atualizados
       queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
+
+      if (!project) {
+        console.error('Project is undefined in onSuccess callback');
+        toast.success('Projeto criado', {
+          description: 'O projeto foi criado com sucesso.',
+        });
+        return;
+      }
+
       toast.success('Projeto criado', {
         description: `O projeto "${project.name}" foi criado com sucesso.`,
       });
@@ -375,6 +385,70 @@ export function useToggleFavorite() {
         queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
         queryClient.invalidateQueries({ queryKey: projectKeys.detail(project.id) });
       }
+    },
+  });
+}
+
+// Hook para duplicar projeto
+export function useDuplicateProject() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      sourceProjectId,
+      includeTasks = true
+    }: {
+      sourceProjectId: number;
+      includeTasks?: boolean;
+    }) => {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          duplicateFrom: sourceProjectId,
+          includeTasks,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to duplicate project');
+      }
+
+      const data = await response.json();
+      return data;
+    },
+    onMutate: async () => {
+      // Cancelar queries para garantir consistência
+      await queryClient.cancelQueries({ queryKey: projectKeys.lists() });
+
+      // Salvar estado anterior
+      const previousProjects = queryClient.getQueryData(projectKeys.lists());
+
+      return { previousProjects };
+    },
+    onError: (err, variables, context) => {
+      // Reverter estado anterior
+      if (context?.previousProjects) {
+        queryClient.setQueryData(projectKeys.lists(), context.previousProjects);
+      }
+      toast.error('Erro ao duplicar projeto', {
+        description: 'Não foi possível duplicar o projeto. Tente novamente.',
+      });
+    },
+    onSuccess: (project, variables) => {
+      // Invalidar queries para buscar dados atualizados
+      queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
+
+      const taskDescription = variables.includeTasks ? 'com todas as tarefas e requisitos' : 'apenas os dados básicos';
+      toast.success('Projeto duplicado', {
+        description: `O projeto foi duplicado ${taskDescription} com sucesso.`,
+      });
+    },
+    onSettled: () => {
+      // Garantir que os dados estão sincronizados
+      queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
     },
   });
 }
