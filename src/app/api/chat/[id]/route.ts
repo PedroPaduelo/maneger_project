@@ -58,8 +58,15 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     const body = await request.json().catch(() => ({}));
     const status = body?.status as string | undefined;
-    if (!status || !['active', 'archived', 'completed'].includes(status)) {
+    const title = typeof body?.title === 'string' ? body.title.trim() : undefined;
+    if (!status && !title) {
+      return NextResponse.json({ error: 'Nada para atualizar' }, { status: 400 });
+    }
+    if (status && !['active', 'archived', 'completed'].includes(status)) {
       return NextResponse.json({ error: 'Status inválido' }, { status: 400 });
+    }
+    if (title !== undefined && (title.length === 0 || title.length > 150)) {
+      return NextResponse.json({ error: 'Título inválido' }, { status: 400 });
     }
 
     // Verifica se a sessão pertence ao usuário
@@ -71,10 +78,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Sessão não encontrada' }, { status: 404 });
     }
 
-    const updated = await prisma.chatSession.update({
-      where: { id: sessionId },
-      data: { status }
-    });
+    const data: any = {};
+    if (status) data.status = status;
+    if (title !== undefined) data.title = title;
+    const updated = await prisma.chatSession.update({ where: { id: sessionId }, data });
 
     return NextResponse.json({ success: true, session: updated });
   } catch (error: unknown) {

@@ -24,6 +24,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { toast } from 'sonner'
+import { Input } from '@/components/ui/input'
 import {
   Send,
   Bot,
@@ -65,7 +66,12 @@ export default function ArchitectChatPage() {
   const [isTyping, setIsTyping] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id: number | null; count: number | null; title: string }>({ open: false, id: null, count: null, title: '' })
+  const [bulkDialog, setBulkDialog] = useState<{ open: boolean; from: 'active' | 'archived' | 'completed'; to: 'active' | 'archived' | 'completed' }>({ open: false, from: 'active', to: 'archived' })
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [editingSessionId, setEditingSessionId] = useState<number | null>(null)
+  const [editingTitle, setEditingTitle] = useState('')
 
   const {
     currentSession,
@@ -78,6 +84,8 @@ export default function ArchitectChatPage() {
     createNewSession,
     deleteSession,
     setSessionStatus,
+    renameSession,
+    bulkUpdateSessions,
     setError
   } = useChat()
 
@@ -102,12 +110,15 @@ export default function ArchitectChatPage() {
     const map = new Map<number, Session>()
     for (const s of sessions) map.set(s.id, s)
     const all = Array.from(map.values())
-    return all.filter(s => {
+    const filtered = all.filter(s => {
       if (sessionFilter === 'active') return s.status === 'active'
       if (sessionFilter === 'archived') return s.status === 'archived'
       return s.status === 'completed'
     })
-  }, [sessions, sessionFilter])
+    if (!searchTerm.trim()) return filtered
+    const q = searchTerm.trim().toLowerCase()
+    return filtered.filter(s => s.title.toLowerCase().includes(q))
+  }, [sessions, sessionFilter, searchTerm])
 
   useEffect(() => {
     if (status === 'loading') return
@@ -191,6 +202,41 @@ export default function ArchitectChatPage() {
     }
   }
 
+  const handleStartEditing = (s: Session, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setEditingSessionId(s.id)
+    setEditingTitle(s.title)
+  }
+
+  const handleSaveTitle = async () => {
+    if (!editingSessionId) return
+    const ok = await renameSession(editingSessionId, editingTitle)
+    if (ok) {
+      toast.success('Título atualizado')
+      setEditingSessionId(null)
+      setEditingTitle('')
+    } else {
+      toast.error('Falha ao atualizar título')
+    }
+  }
+
+  const handleBulkAction = () => {
+    const to = sessionFilter === 'active' ? 'archived' : 'active'
+    setBulkDialog({ open: true, from: sessionFilter, to })
+  }
+
+  const confirmBulkAction = async () => {
+    setIsBulkProcessing(true)
+    const res = await bulkUpdateSessions(bulkDialog.from, bulkDialog.to)
+    setIsBulkProcessing(false)
+    setBulkDialog(prev => ({ ...prev, open: false }))
+    if ((res?.updatedCount || 0) > 0) {
+      toast.success(`${res.updatedCount} conversas atualizadas`)
+    } else {
+      toast('Nenhuma conversa para atualizar')
+    }
+  }
+
   if (status === 'loading') {
     return (
       <SidebarLayout title="Arquiteto de Projetos">
@@ -262,6 +308,19 @@ export default function ArchitectChatPage() {
                       onClick={() => setSessionFilter('completed')}
                     >Concluídas</button>
                   </div>
+                  <div className="relative">
+                    <Input
+                      placeholder="Buscar..."
+                      className="h-8 w-40 bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  {(sessionFilter === 'active' || sessionFilter === 'archived') && (
+                    <GlassButton variant="ghost" size="sm" onClick={handleBulkAction}>
+                      {sessionFilter === 'active' ? 'Arquivar todas' : 'Restaurar todas'}
+                    </GlassButton>
+                  )}
                   <GlassButton
                     variant="ghost"
                     size="sm"
@@ -296,7 +355,21 @@ export default function ArchitectChatPage() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <h4 className="text-sm font-medium text-white truncate flex items-center gap-2">
-                          <span className="truncate">{session.title}</span>
+                          {editingSessionId === session.id ? (
+                            <Input
+                              autoFocus
+                              value={editingTitle}
+                              onChange={(e) => setEditingTitle(e.target.value)}
+                              onClick={(e) => e.stopPropagation()}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveTitle()
+                                if (e.key === 'Escape') { setEditingSessionId(null); setEditingTitle('') }
+                              }}
+                              className="h-7 w-40 bg-white/10 border-white/20 text-white"
+                            />
+                          ) : (
+                            <span className="truncate">{session.title}</span>
+                          )}
                           {session.status === 'archived' && (
                             <span className="text-[10px] px-2 py-0.5 rounded-full border border-white/20 bg-white/10 text-white/70 shrink-0">Arquivada</span>
                           )}
@@ -317,6 +390,15 @@ export default function ArchitectChatPage() {
                           title="Excluir conversa"
                         >
                           <Trash2 className="w-3 h-3" />
+                        </GlassButton>
+                        <GlassButton
+                          variant="ghost"
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => handleStartEditing(session, e)}
+                          title="Renomear"
+                        >
+                          <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4Z"/></svg>
                         </GlassButton>
                         <GlassButton
                           variant="ghost"
@@ -552,7 +634,7 @@ export default function ArchitectChatPage() {
               />
               <GlassButton
                 onClick={handleSendMessage}
-                disabled={!inputValue.trim() || isLoading || isTyping || !hasEnoughCredits(0.01)}
+                disabled={!inputValue.trim() || isLoading || isTyping || !hasEnoughCredits(15)}
                 size="lg"
                 className="px-6"
               >
@@ -591,7 +673,26 @@ export default function ArchitectChatPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog de confirmação de ação em massa */}
+      <AlertDialog open={bulkDialog.open} onOpenChange={(open) => setBulkDialog(prev => ({ ...prev, open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{bulkDialog.to === 'archived' ? 'Arquivar todas as conversas?' : 'Restaurar todas as conversas?'}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {bulkDialog.to === 'archived'
+                ? 'Todas as conversas listadas serão movidas para Arquivadas.'
+                : 'Todas as conversas listadas serão movidas para Ativas.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isBulkProcessing}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmBulkAction} disabled={isBulkProcessing}>
+              {isBulkProcessing ? 'Processando...' : 'Confirmar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SidebarLayout>
   )
 }
-  const [sessionFilter, setSessionFilter] = useState<'active' | 'archived'>('active')

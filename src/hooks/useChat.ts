@@ -215,6 +215,52 @@ export function useChat() {
     loadSessions();
   }, [loadSessions]);
 
+  // Renomear sessão
+  const renameSession = useCallback(async (sessionId: number, title: string) => {
+    if (!session?.user?.id || !title.trim()) return false;
+    try {
+      const res = await fetch(`/api/chat/${sessionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: title.trim() })
+      });
+      if (!res.ok) return false;
+      const data = await res.json();
+      const updated = data.session;
+      setSessions(prev => prev.map(s => (s.id === sessionId ? { ...s, title: updated.title } : s)));
+      if (currentSession?.id === sessionId) {
+        setCurrentSession(prev => (prev ? { ...prev, title: updated.title } : prev));
+      }
+      return true;
+    } catch (err) {
+      console.error('Erro ao renomear sessão:', err);
+      return false;
+    }
+  }, [session?.user?.id, currentSession]);
+
+  // Bulk update status
+  const bulkUpdateSessions = useCallback(async (statusFrom: 'active' | 'archived' | 'completed', statusTo: 'active' | 'archived' | 'completed') => {
+    if (!session?.user?.id) return { updatedCount: 0 };
+    try {
+      const res = await fetch('/api/chat/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ statusFrom, statusTo })
+      });
+      if (!res.ok) return { updatedCount: 0 };
+      const data = await res.json();
+      const ids: number[] = data.ids || [];
+      setSessions(prev => prev.map(s => (ids.includes(s.id) ? { ...s, status: statusTo } : s)));
+      if (currentSession && ids.includes(currentSession.id)) {
+        setCurrentSession(prev => (prev ? { ...prev, status: statusTo } : prev));
+      }
+      return { updatedCount: data.updatedCount || ids.length };
+    } catch (err) {
+      console.error('Erro no bulk update de sessões:', err);
+      return { updatedCount: 0 };
+    }
+  }, [session?.user?.id, currentSession]);
+
   return {
     isLoading,
     error,
@@ -223,9 +269,12 @@ export function useChat() {
     messages,
     sendMessage,
     loadSession,
+    loadSessions,
     createNewSession,
     deleteSession,
     setSessionStatus,
+    renameSession,
+    bulkUpdateSessions,
     setError
   };
 }
