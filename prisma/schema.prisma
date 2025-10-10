@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -84,6 +84,7 @@ model User {
   notifications    Notification[]
   projectFavorites ProjectFavorite[]
   createdTags      Tag[]             @relation("TagCreator")
+  credits          UserCredit[]
 
   @@index([isActive])
   @@index([createdAt])
@@ -320,6 +321,87 @@ model Notification {
   @@index([priority], name: "idx_notification_priority")
   @@index([createdAt], name: "idx_notification_created_at")
   @@map("tbl_notification")
+}
+
+model UserCredit {
+  id        Int      @id @default(autoincrement())
+  userId    String   @map("user_id")
+  balance   Float    @default(0.0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  creditTransactions  CreditTransaction[]
+
+  @@unique([userId])
+  @@index([userId])
+  @@index([balance])
+  @@map("tbl_user_credits")
+}
+
+model CreditTransaction {
+  id          Int      @id @default(autoincrement())
+  userCreditId Int     @map("user_credit_id")
+  amount      Float
+  type        String   // "credit", "debit", "bonus", "refund"
+  description String
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  userCredit UserCredit @relation(fields: [userCreditId], references: [id], onDelete: Cascade)
+
+  @@index([userCreditId, createdAt])
+  @@index([type])
+  @@index([createdAt])
+  @@map("tbl_credit_transactions")
+}
+
+model ArchitectConfig {
+  id          Int      @id @default(autoincrement())
+  userId      String   @map("user_id")
+  name        String   @default("Arquiteto Padrão")
+  prompt      String
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([isActive])
+  @@map("tbl_architect_configs")
+}
+
+model ChatSession {
+  id          Int      @id @default(autoincrement())
+  userId      String   @map("user_id")
+  title       String
+  status      String   @default("active") // "active", "archived", "completed"
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  messages ChatMessage[]
+
+  @@index([userId, status])
+  @@index([createdAt])
+  @@map("tbl_chat_sessions")
+}
+
+model ChatMessage {
+  id          Int      @id @default(autoincrement())
+  sessionId   Int      @map("session_id")
+  role        String   // "user", "assistant", "system"
+  content     String
+  metadata    Json?
+  tokensUsed  Int?     @map("tokens_used")
+  cost        Float?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  session ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+  @@index([role])
+  @@index([createdAt])
+  @@map("tbl_chat_messages")
 }
 
 enum TokenType {

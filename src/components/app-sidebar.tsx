@@ -24,7 +24,9 @@ import {
   Filter,
   RefreshCw,
   Grid3X3,
-  Table
+  Table,
+  Bot,
+  Sparkles
 } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
@@ -117,6 +119,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           icon: FileText,
           description: "Especificações",
           isActive: pathname === "/requirements"
+        },
+      ]
+    },
+    {
+      title: "Arquiteto IA",
+      items: [
+        {
+          title: "Chat com Arquiteto",
+          url: "/architect-chat",
+          icon: Bot,
+          description: "Assistente de projetos",
+          isActive: pathname === "/architect-chat"
+        },
+        {
+          title: "Configurações",
+          url: "/architect-settings",
+          icon: Settings,
+          description: "Personalizar assistente",
+          isActive: pathname === "/architect-settings"
         },
       ]
     },
