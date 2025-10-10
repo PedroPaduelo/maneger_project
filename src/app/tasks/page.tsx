@@ -1,18 +1,25 @@
 "use client";
 
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useTasksQuery, useProjects } from "@/hooks";
 import { SidebarLayout } from "@/components/sidebar-layout";
-import { TaskTable } from "@/components/task-table";
+import { TaskListWithFilters } from "@/components/task-list-with-filters";
+import { CreateGlobalTaskDialog } from "@/components/create-global-task-dialog";
+import { ViewToggle } from "@/components/view-toggle";
 import { Button } from "@/components/ui/button";
-import { Plus, CheckSquare } from "lucide-react";
+import { CheckSquare } from "lucide-react";
+import { useViewMode } from "@/hooks/use-view-mode";
 
 export default function TasksPage() {
   const { data: session, status } = useSession();
+  const { viewMode, setViewMode, isLoaded } = useViewMode();
+
   const {
     data: tasks = [],
     isLoading: tasksLoading,
-    error: tasksError
+    error: tasksError,
+    refetch: refetchTasks
   } = useTasksQuery();
 
   const {
@@ -29,7 +36,11 @@ export default function TasksPage() {
     name: project.name
   }));
 
-  if (status === "loading" || tasksLoading) {
+  const handleTaskCreated = () => {
+    refetchTasks();
+  };
+
+  if (status === "loading" || tasksLoading || projectsLoading) {
     return (
       <SidebarLayout title="Tarefas" breadcrumbs={[{ label: "Tarefas" }]}>
         <div className="flex items-center justify-center min-h-[400px]">
@@ -74,10 +85,12 @@ export default function TasksPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Tarefas</h1>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Tarefa
-          </Button>
+          <div className="flex items-center gap-2">
+            {isLoaded && tasks.length > 0 && (
+              <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+            )}
+            <CreateGlobalTaskDialog projects={projects} onTaskCreated={handleTaskCreated} />
+          </div>
         </div>
 
         {tasks.length === 0 ? (
@@ -88,18 +101,20 @@ export default function TasksPage() {
               Comece criando sua primeira tarefa.
             </p>
             <div className="mt-6">
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Nova Tarefa
-              </Button>
+              <CreateGlobalTaskDialog projects={projects} onTaskCreated={handleTaskCreated} />
             </div>
           </div>
         ) : (
-          <TaskTable
-            tasks={tasks}
-            availableCreators={availableCreators}
-            availableProjects={availableProjects}
-          />
+          <>
+            {isLoaded && (
+              <TaskListWithFilters
+                tasks={tasks}
+                availableCreators={availableCreators}
+                availableProjects={availableProjects}
+                viewMode={viewMode}
+              />
+            )}
+          </>
         )}
       </div>
     </SidebarLayout>
