@@ -7,9 +7,29 @@ const globalForPrisma = globalThis as unknown as {
 export const db =
   globalForPrisma.prisma ??
   new PrismaClient({
-    log: ['query'],
+    log: process.env.NODE_ENV === 'development' ? ['query'] : [],
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL
+      }
+    }
   })
 
 export const prisma = db
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
+
+// Graceful shutdown
+process.on('beforeExit', async () => {
+  await prisma.$disconnect()
+})
+
+process.on('SIGINT', async () => {
+  await prisma.$disconnect()
+  process.exit(0)
+})
+
+process.on('SIGTERM', async () => {
+  await prisma.$disconnect()
+  process.exit(0)
+})

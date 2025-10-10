@@ -45,7 +45,7 @@ export function useArchitectConfig() {
 
   // Criar nova configuração
   const createConfig = useCallback(async (name: string, prompt: string, isActive = false) => {
-    if (!session?.user?.id || !name.trim() || !prompt.trim()) return null;
+    if (!session?.user?.id || !name.trim() || !prompt.trim()) return false;
 
     try {
       setIsLoading(true);
@@ -76,16 +76,16 @@ export function useArchitectConfig() {
           setConfigs(prev => [newConfig, ...prev]);
         }
 
-        return newConfig;
+        return true;
       } else {
         const errorData = await response.json();
         setError(errorData.error || 'Erro ao criar configuração');
-        return null;
+        return false;
       }
     } catch (err) {
       setError('Erro ao criar configuração');
       console.error('Erro ao criar configuração:', err);
-      return null;
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -93,7 +93,7 @@ export function useArchitectConfig() {
 
   // Atualizar configuração
   const updateConfig = useCallback(async (id: number, updates: Partial<ArchitectConfig>) => {
-    if (!session?.user?.id) return null;
+    if (!session?.user?.id) return false;
 
     try {
       setIsLoading(true);
@@ -123,16 +123,16 @@ export function useArchitectConfig() {
           setActiveConfig(updatedConfig);
         }
 
-        return updatedConfig;
+        return true;
       } else {
         const errorData = await response.json();
         setError(errorData.error || 'Erro ao atualizar configuração');
-        return null;
+        return false;
       }
     } catch (err) {
       setError('Erro ao atualizar configuração');
       console.error('Erro ao atualizar configuração:', err);
-      return null;
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -192,14 +192,30 @@ export function useArchitectConfig() {
       setIsLoading(true);
       setError(null);
 
-      // Desativar todas as configurações
-      await Promise.all(
-        configs.map(config =>
-          updateConfig(config.id, { isActive: config.id === id })
-        )
-      );
+      // Fazer chamada direta para a API em vez de usar updateConfig
+      const response = await fetch(`/api/architect-config/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ isActive: true }),
+      });
 
-      return true;
+      if (response.ok) {
+        const updatedConfig: ArchitectConfig = await response.json();
+
+        // Atualizar estado local
+        setConfigs(prev => prev.map(config =>
+          config.id === id ? updatedConfig : { ...config, isActive: false }
+        ));
+        setActiveConfig(updatedConfig);
+
+        return true;
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Erro ao definir configuração ativa');
+        return false;
+      }
     } catch (err) {
       setError('Erro ao definir configuração ativa');
       console.error('Erro ao definir configuração ativa:', err);
@@ -207,7 +223,7 @@ export function useArchitectConfig() {
     } finally {
       setIsLoading(false);
     }
-  }, [session?.user?.id, configs, updateConfig]);
+  }, [session?.user?.id]);
 
   // Carregar configurações na montagem do componente
   useEffect(() => {

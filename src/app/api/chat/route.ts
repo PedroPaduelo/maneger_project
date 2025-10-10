@@ -32,17 +32,18 @@ export async function POST(request: NextRequest) {
       }, { status: 503 });
     }
 
-    // Verificar créditos do usuário
+    // Verificar coins do usuário
     const userCredit = await prisma.userCredit.findUnique({
       where: { userId: session.user.id }
     });
 
-    const initialCredits = 10.0; // Créditos iniciais para novos usuários
+    const initialCredits = 10.0; // Coins iniciais para novos usuários
     const currentBalance = userCredit?.balance || initialCredits;
 
-    if (currentBalance <= 0) {
+    const CREDITS_PER_MESSAGE = 15; // Coins por mensagem
+    if (currentBalance < CREDITS_PER_MESSAGE) {
       return NextResponse.json({
-        error: 'Créditos insuficientes',
+        error: 'Coins insuficientes',
         code: 'INSUFFICIENT_CREDITS'
       }, { status: 402 });
     }
@@ -96,21 +97,18 @@ export async function POST(request: NextRequest) {
     // Enviar mensagem para Claude
     const claudeResponse = await ClaudeService.sendMessage(context);
 
-    // Calcular créditos baseados em tokens (200k tokens = 10 créditos)
-    let creditsUsed = 0;
+    // Custo fixo por mensagem em coins
+    const creditsUsed = CREDITS_PER_MESSAGE;
     if (claudeResponse.usage) {
-      const totalTokens = claudeResponse.usage.input_tokens + claudeResponse.usage.output_tokens;
-      creditsUsed = calculateCreditsFromTokens(totalTokens);
-      console.log('📊 Tokens usados:', claudeResponse.usage);
-      console.log('💰 Créditos calculados:', creditsUsed);
+      console.log('📊 Tokens usados (informativo):', claudeResponse.usage);
     }
 
     // Verificar se usuário tem créditos suficientes
-    console.log('💰 Saldo atual:', currentBalance, 'Créditos necessários:', creditsUsed);
+    console.log('💰 Saldo atual:', currentBalance, 'Coins necessários:', creditsUsed);
     if (currentBalance < creditsUsed) {
-      console.log('❌ Créditos insuficientes');
+      console.log('❌ Coins insuficientes');
       return NextResponse.json({
-        error: 'Créditos insuficientes para esta operação',
+        error: 'Coins insuficientes para esta operação',
         code: 'INSUFFICIENT_CREDITS'
       }, { status: 402 });
     }
@@ -123,7 +121,8 @@ export async function POST(request: NextRequest) {
         role: 'user',
         content: message,
         tokensUsed: claudeResponse.usage?.input_tokens,
-        cost: claudeResponse.usage ? Math.ceil(creditsUsed * 0.5) : 0 // 50% dos créditos para input
+        // custo imputado ao usuário (mensagem enviada) = 0; custo total será no assistente
+        cost: 0
       }
     });
     console.log('✅ Mensagem do usuário salva');
@@ -136,7 +135,8 @@ export async function POST(request: NextRequest) {
         role: 'assistant',
         content: claudeResponse.content,
         tokensUsed: claudeResponse.usage?.output_tokens,
-        cost: claudeResponse.usage ? Math.ceil(creditsUsed * 0.5) : 0 // 50% dos créditos para output
+        // custo total da interação vai no output do assistente
+        cost: creditsUsed
       }
     });
     console.log('✅ Resposta do assistente salva');
@@ -156,7 +156,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Registrar transação de créditos
+    // Registrar transação de coins
     const updatedUserCredit = userCredit || await prisma.userCredit.findUnique({
       where: { userId: session.user.id }
     });
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
           userCreditId: updatedUserCredit.id,
           amount: -creditsUsed,
           type: 'debit',
-          description: `Chat com arquiteto - ${chatSession.id} (${creditsUsed} créditos)`,
+          description: `Chat com arquiteto - ${chatSession.id} (${creditsUsed} coins)`,
           metadata: {
             sessionId: chatSession.id,
             tokensUsed: claudeResponse.usage,

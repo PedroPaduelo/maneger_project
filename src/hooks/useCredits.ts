@@ -27,7 +27,7 @@ export function useCredits() {
   const [transactions, setTransactions] = useState<CreditTransaction[]>([]);
   const [stats, setStats] = useState<CreditStats>({});
 
-  // Carregar dados dos créditos
+  // Carregar dados dos coins
   const loadCredits = useCallback(async () => {
     if (!session?.user?.id) return;
 
@@ -42,17 +42,17 @@ export function useCredits() {
         setTransactions(data.transactions);
         setStats(data.stats);
       } else {
-        setError('Erro ao carregar créditos');
+        setError('Erro ao carregar coins');
       }
     } catch (err) {
-      setError('Erro ao carregar créditos');
-      console.error('Erro ao carregar créditos:', err);
+      setError('Erro ao carregar coins');
+      console.error('Erro ao carregar coins:', err);
     } finally {
       setIsLoading(false);
     }
   }, [session?.user?.id]);
 
-  // Adicionar créditos
+  // Adicionar coins
   const addCredits = useCallback(async (amount: number, description: string) => {
     if (!session?.user?.id || amount <= 0) return null;
 
@@ -79,30 +79,27 @@ export function useCredits() {
         return data;
       } else {
         const errorData = await response.json();
-        setError(errorData.error || 'Erro ao adicionar créditos');
+        setError(errorData.error || 'Erro ao adicionar coins');
         return null;
       }
     } catch (err) {
-      setError('Erro ao adicionar créditos');
-      console.error('Erro ao adicionar créditos:', err);
+      setError('Erro ao adicionar coins');
+      console.error('Erro ao adicionar coins:', err);
       return null;
     } finally {
       setIsLoading(false);
     }
   }, [session?.user?.id, loadCredits]);
 
-  // Verificar se tem créditos suficientes
+  // Verificar se tem coins suficientes
   const hasEnoughCredits = useCallback((required: number) => {
     return balance >= required;
   }, [balance]);
 
-  // Formatar valor para exibição
+  // Formatar valor para exibição (símbolo de moeda genérico: 🪙)
   const formatBalance = useCallback((value?: number) => {
     const val = value ?? balance;
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(val);
+    return `🪙 ${new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(Math.round(val))}`;
   }, [balance]);
 
   // Carregar dados na montagem do componente

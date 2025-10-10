@@ -38,6 +38,13 @@ export function useChat() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
 
+  // Helper para deduplicar por id
+  const dedupeById = useCallback(<T extends { id: number }>(items: T[]): T[] => {
+    const map = new Map<number, T>();
+    for (const item of items) map.set(item.id, item);
+    return Array.from(map.values());
+  }, []);
+
   // Carregar sessões do usuário
   const loadSessions = useCallback(async () => {
     if (!session?.user?.id) return;
@@ -46,12 +53,12 @@ export function useChat() {
       const response = await fetch('/api/chat');
       if (response.ok) {
         const data = await response.json();
-        setSessions(data);
+        setSessions((prev) => dedupeById([...(Array.isArray(data) ? data : []), ...prev]));
       }
     } catch (err) {
       console.error('Erro ao carregar sessões:', err);
     }
-  }, [session?.user?.id]);
+  }, [session?.user?.id, dedupeById]);
 
   // Carregar mensagens de uma sessão
   const loadSession = useCallback(async (sessionId: number) => {
@@ -108,7 +115,7 @@ export function useChat() {
 
       if (!response.ok) {
         if (data.code === 'INSUFFICIENT_CREDITS') {
-          throw new Error('Créditos insuficientes. Recarregue seus créditos para continuar.');
+          throw new Error('Coins insuficientes. Recarregue seus coins para continuar.');
         }
         throw new Error(data.error || 'Erro ao enviar mensagem');
       }
@@ -126,26 +133,10 @@ export function useChat() {
 
       // Atualizar sessão atual se for uma nova sessão
       if (!currentSession || currentSession.id !== data.sessionId) {
-        await loadSessions();
-        // Aguarda um pouco para garantir que a lista foi atualizada
-        setTimeout(() => {
-          const updatedSession = sessions.find(s => s.id === data.sessionId);
-          if (updatedSession) {
-            setCurrentSession(updatedSession);
-          } else {
-            // Se não encontrou na lista, cria sessão local com dados básicos
-            const newSession: ChatSession = {
-              id: data.sessionId,
-              title: message.substring(0, 47) + (message.length > 47 ? '...' : ''),
-              status: 'active',
-              messages: [...messages, userMessage, assistantMessage],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            };
-            setCurrentSession(newSession);
-            setSessions(prev => [newSession, ...prev]);
-          }
-        }, 100);
+        // Carrega sessão recém-criada/atualizada do backend para evitar duplicidades
+        await loadSession(data.sessionId);
+        // Atualiza lista de sessões em paralelo (sem bloquear)
+        loadSessions();
       } else {
         // Se for a mesma sessão, apenas atualiza as mensagens
         setCurrentSession(prev => prev ? {
@@ -167,7 +158,7 @@ export function useChat() {
     } finally {
       setIsLoading(false);
     }
-  }, [session?.user?.id, currentSession, sessions, loadSessions]);
+  }, [session?.user?.id, currentSession, loadSession, loadSessions]);
 
   // Criar nova sessão
   const createNewSession = useCallback(() => {
@@ -195,6 +186,30 @@ export function useChat() {
     }
   }, [session?.user?.id, currentSession, createNewSession]);
 
+  // Arquivar/Desarquivar sessão
+  const setSessionStatus = useCallback(async (sessionId: number, status: 'active' | 'archived' | 'completed') => {
+    if (!session?.user?.id) return null;
+
+    try {
+      const res = await fetch(`/api/chat/${sessionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      const updated = data.session;
+      setSessions(prev => prev.map(s => (s.id === sessionId ? { ...s, status: updated.status } : s)));
+      if (currentSession?.id === sessionId) {
+        setCurrentSession(prev => (prev ? { ...prev, status: updated.status } : prev));
+      }
+      return updated;
+    } catch (err) {
+      console.error('Erro ao atualizar status da sessão:', err);
+      return null;
+    }
+  }, [session?.user?.id, currentSession]);
+
   // Carregar sessões na montagem do componente
   useEffect(() => {
     loadSessions();
@@ -210,6 +225,7 @@ export function useChat() {
     loadSession,
     createNewSession,
     deleteSession,
+    setSessionStatus,
     setError
   };
 }

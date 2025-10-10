@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -12,6 +12,18 @@ import { GlassButton } from '@/components/ui/glass-button'
 import { GlassTextarea } from '@/components/ui/glass-textarea'
 import { SidebarLayout } from '@/components/sidebar-layout'
 import { ProjectMessage } from '@/components/ui/project-message'
+import { AgentActionsBar } from '@/components/agent/AgentActionsBar'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { toast } from 'sonner'
 import {
   Send,
   Bot,
@@ -24,7 +36,8 @@ import {
   Loader2,
   AlertCircle,
   Sparkles,
-  Zap
+  Zap,
+  CheckCircle
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -51,6 +64,8 @@ export default function ArchitectChatPage() {
   const [inputValue, setInputValue] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id: number | null; count: number | null; title: string }>({ open: false, id: null, count: null, title: '' })
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const {
     currentSession,
@@ -62,6 +77,7 @@ export default function ArchitectChatPage() {
     loadSession,
     createNewSession,
     deleteSession,
+    setSessionStatus,
     setError
   } = useChat()
 
@@ -79,6 +95,19 @@ export default function ArchitectChatPage() {
     updateConfig,
     isLoading: configLoading
   } = useArchitectConfig()
+
+  // Garante lista de sessões sem duplicatas por id (previne chaves repetidas)
+  const [sessionFilter, setSessionFilter] = useState<'active' | 'archived' | 'completed'>('active')
+  const uniqueSessions = useMemo(() => {
+    const map = new Map<number, Session>()
+    for (const s of sessions) map.set(s.id, s)
+    const all = Array.from(map.values())
+    return all.filter(s => {
+      if (sessionFilter === 'active') return s.status === 'active'
+      if (sessionFilter === 'archived') return s.status === 'archived'
+      return s.status === 'completed'
+    })
+  }, [sessions, sessionFilter])
 
   useEffect(() => {
     if (status === 'loading') return
@@ -100,8 +129,8 @@ export default function ArchitectChatPage() {
     if (!inputValue.trim() || isLoading || isTyping) return
 
     // Verificar créditos
-    if (!hasEnoughCredits(0.01)) {
-      setError('Créditos insuficientes. Adicione créditos para continuar.')
+    if (!hasEnoughCredits(15)) {
+      setError('Coins insuficientes. Adicione coins para continuar.')
       return
     }
 
@@ -133,10 +162,32 @@ export default function ArchitectChatPage() {
     createNewSession()
   }
 
-  const handleDeleteSession = async (sessionId: number, e: React.MouseEvent) => {
+  const handleOpenDelete = async (sessionItem: Session, e: React.MouseEvent) => {
     e.stopPropagation()
-    if (confirm('Tem certeza que deseja excluir esta conversa?')) {
-      await deleteSession(sessionId)
+    setDeleteDialog({ open: true, id: sessionItem.id, count: null, title: sessionItem.title })
+    try {
+      const res = await fetch(`/api/chat?sessionId=${sessionItem.id}`)
+      if (res.ok) {
+        const data = await res.json()
+        const count = Array.isArray(data.messages) ? data.messages.length : 0
+        setDeleteDialog(prev => ({ ...prev, count }))
+      }
+    } catch (_) {
+      // silencioso
+    }
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!deleteDialog.id) return
+    setIsDeleting(true)
+    try {
+      await deleteSession(deleteDialog.id)
+      toast.success('Conversa excluída com sucesso')
+      setDeleteDialog({ open: false, id: null, count: null, title: '' })
+    } catch (err) {
+      toast.error('Falha ao excluir a conversa')
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -170,7 +221,7 @@ export default function ArchitectChatPage() {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <CreditCard className="w-4 h-4 text-white/70" />
-                <span className="text-sm text-white/70">Créditos</span>
+                <span className="text-sm text-white/70">Coins</span>
               </div>
               <GlassButton
                 variant="ghost"
@@ -184,7 +235,7 @@ export default function ArchitectChatPage() {
               {formatBalance()}
             </div>
             <div className="text-xs text-white/50">
-              Cada mensagem consome créditos baseado no uso
+              Cada mensagem custa 🪙 15
             </div>
           </GlassCard>
 
@@ -196,23 +247,39 @@ export default function ArchitectChatPage() {
                   <MessageSquare className="w-4 h-4 text-white/70" />
                   <span className="text-sm text-white/70">Conversas</span>
                 </div>
-                <GlassButton
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleNewSession}
-                >
-                  <Plus className="w-4 h-4" />
-                </GlassButton>
+                <div className="flex items-center gap-2">
+                  <div className="text-xs rounded-full bg-white/10 border border-white/10 overflow-hidden">
+                    <button
+                      className={`px-3 py-1 ${sessionFilter === 'active' ? 'bg-white/20' : ''}`}
+                      onClick={() => setSessionFilter('active')}
+                    >Ativas</button>
+                    <button
+                      className={`px-3 py-1 ${sessionFilter === 'archived' ? 'bg-white/20' : ''}`}
+                      onClick={() => setSessionFilter('archived')}
+                    >Arquivadas</button>
+                    <button
+                      className={`px-3 py-1 ${sessionFilter === 'completed' ? 'bg-white/20' : ''}`}
+                      onClick={() => setSessionFilter('completed')}
+                    >Concluídas</button>
+                  </div>
+                  <GlassButton
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleNewSession}
+                  >
+                    <Plus className="w-4 h-4" />
+                  </GlassButton>
+                </div>
               </div>
             </GlassCardHeader>
             <div className="overflow-y-auto max-h-96 space-y-2 px-4 pb-4">
-              {sessions.length === 0 ? (
+              {uniqueSessions.length === 0 ? (
                 <div className="text-center py-8">
                   <MessageSquare className="w-8 h-8 text-white/30 mx-auto mb-2" />
                   <p className="text-sm text-white/50">Nenhuma conversa ainda</p>
                 </div>
               ) : (
-                sessions.map((session: Session) => (
+                uniqueSessions.map((session: Session) => (
                   <motion.div
                     key={session.id}
                     initial={{ opacity: 0, y: 10 }}
@@ -228,31 +295,82 @@ export default function ArchitectChatPage() {
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-medium text-white truncate">
-                          {session.title}
+                        <h4 className="text-sm font-medium text-white truncate flex items-center gap-2">
+                          <span className="truncate">{session.title}</span>
+                          {session.status === 'archived' && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full border border-white/20 bg-white/10 text-white/70 shrink-0">Arquivada</span>
+                          )}
+                          {session.status === 'completed' && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full border border-green-400/30 bg-green-400/10 text-green-300 shrink-0">Concluída</span>
+                          )}
                         </h4>
                         <p className="text-xs text-white/50 mt-1">
                           {format(new Date(session.updatedAt), 'dd/MM HH:mm', { locale: ptBR })}
                         </p>
                       </div>
-                      <GlassButton
-                        variant="ghost"
-                        size="sm"
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => handleDeleteSession(session.id, e)}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </GlassButton>
+                      <div className="flex items-center gap-1">
+                        <GlassButton
+                          variant="ghost"
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => handleOpenDelete(session, e)}
+                          title="Excluir conversa"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </GlassButton>
+                        <GlassButton
+                          variant="ghost"
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            const next = session.status === 'archived' ? 'active' : 'archived'
+                            setSessionStatus(session.id, next).then((res) => {
+                              if (res) {
+                                toast.success(next === 'archived' ? 'Conversa arquivada' : 'Conversa restaurada')
+                              } else {
+                                toast.error('Falha ao atualizar conversa')
+                              }
+                            })
+                          }}
+                          title={session.status === 'archived' ? 'Restaurar' : 'Arquivar'}
+                        >
+                          {session.status === 'archived' ? (
+                            <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3h18v4H3z"/><path d="M19 7v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7"/><path d="M9 15l3-3 3 3"/></svg>
+                          ) : (
+                            <svg viewBox="0 0 24 24" className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3h18v4H3z"/><path d="M19 7v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7"/><path d="M9 12l3 3 3-3"/></svg>
+                          )}
+                        </GlassButton>
+                        <GlassButton
+                          variant="ghost"
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            const next = session.status === 'completed' ? 'active' : 'completed'
+                            setSessionStatus(session.id, next).then((res) => {
+                              if (res) {
+                                toast.success(next === 'completed' ? 'Conversa marcada como concluída' : 'Conversa reaberta')
+                              } else {
+                                toast.error('Falha ao atualizar conversa')
+                              }
+                            })
+                          }}
+                          title={session.status === 'completed' ? 'Reabrir' : 'Marcar como concluída'}
+                        >
+                          <CheckCircle className="w-3 h-3" />
+                        </GlassButton>
+                      </div>
                     </div>
                   </motion.div>
                 ))
               )}
             </div>
           </GlassCard>
-        </div>
+      </div>
 
-        {/* Área principal de chat */}
-        <div className="flex-1 flex flex-col gap-4">
+      {/* Área principal de chat */}
+      <div className="flex-1 flex flex-col gap-4">
           {/* Header */}
           <GlassCard className="p-4">
             <div className="flex items-center justify-between">
@@ -267,6 +385,16 @@ export default function ArchitectChatPage() {
                   <p className="text-sm text-white/50">
                     Seu assistente especializado em arquitetura de software
                   </p>
+                  {currentSession && currentSession.status !== 'active' && (
+                    <div className="mt-1">
+                      {currentSession.status === 'archived' && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full border border-white/20 bg-white/10 text-white/70">Conversa arquivada</span>
+                      )}
+                      {currentSession.status === 'completed' && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full border border-green-400/30 bg-green-400/10 text-green-300">Conversa concluída</span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               {isTyping && (
@@ -352,6 +480,10 @@ export default function ArchitectChatPage() {
                           />
                         )}
 
+                        {message.role === 'assistant' && (
+                          <AgentActionsBar message={message.content} />
+                        )}
+
                         {message.cost && message.cost > 0 && (
                           <div className="flex items-center gap-1 mt-2 text-xs text-white/30">
                             <Zap className="w-3 h-3" />
@@ -434,11 +566,32 @@ export default function ArchitectChatPage() {
 
             <div className="mt-2 flex items-center justify-between text-xs text-white/30">
               <span>Pressione Enter para enviar, Shift+Enter para nova linha</span>
-              <span>Custo estimado: ~$0.01-0.05 por mensagem</span>
+              <span>Custo: 🪙 15 por mensagem</span>
             </div>
           </GlassCard>
-        </div>
       </div>
+      </div>
+
+      {/* Dialog de confirmação de exclusão */}
+      <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog(prev => ({ ...prev, open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir conversa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteDialog.count === null
+                ? 'Carregando informações da conversa...'
+                : `Esta ação excluirá permanentemente ${deleteDialog.count} mensagem(ns) da conversa “${deleteDialog.title}”.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} disabled={isDeleting}>
+              {isDeleting ? 'Excluindo...' : 'Excluir' }
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SidebarLayout>
   )
 }
+  const [sessionFilter, setSessionFilter] = useState<'active' | 'archived'>('active')

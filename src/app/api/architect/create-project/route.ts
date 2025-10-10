@@ -40,9 +40,9 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // Se houver requisitos, criá-los
+    // Se houver requisitos, criá-los (link com tasks será feito quando as tasks forem criadas)
     if (requirements.length > 0) {
-      const createdRequirements = await Promise.all(
+      await Promise.all(
         requirements.map(req =>
           prisma.requirement.create({
             data: {
@@ -52,18 +52,6 @@ export async function POST(request: NextRequest) {
               category: req.category || 'Geral',
               priority: req.priority || 'Média',
               projectId: project.id
-            }
-          })
-        )
-      );
-
-      // Vincular requisitos ao projeto
-      await Promise.all(
-        createdRequirements.map(req =>
-          prisma.requirementTask.create({
-            data: {
-              requirementId: req.id,
-              taskId: 0 // Placeholder, será atualizado quando criar tasks
             }
           })
         )

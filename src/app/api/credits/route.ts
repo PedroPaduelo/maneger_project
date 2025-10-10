@@ -2,12 +2,32 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { createTestUserPostgres, createUserWithCreditsPostgres } from '@/lib/seed-postgres';
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+
+    // Garantir que o usuário exista no banco e tenha todos os campos necessários
+    try {
+      const user = await createTestUserPostgres();
+
+      // Garantir que o usuário tenha créditos
+      await createUserWithCreditsPostgres(user.id);
+    } catch (error) {
+      console.warn('Não foi possível configurar usuário:', error);
+
+      // Se não conseguir criar o usuário, tenta criar com os dados da sessão
+      if (session?.user?.id) {
+        try {
+          await createUserWithCreditsPostgres(session.user.id);
+        } catch (creditError) {
+          console.error('Não foi possível criar créditos para usuário:', creditError);
+        }
+      }
     }
 
     // Obter saldo atual do usuário
@@ -17,22 +37,29 @@ export async function GET(request: NextRequest) {
 
     // Se não houver registro de crédito, criar com saldo inicial
     if (!userCredit) {
-      userCredit = await prisma.userCredit.create({
-        data: {
+      userCredit = await prisma.userCredit.upsert({
+        where: { userId: session.user.id },
+        update: {},
+        create: {
           userId: session.user.id,
           balance: 10.0 // Saldo inicial de 10 créditos
         }
       });
 
-      // Registrar transação inicial
-      await prisma.creditTransaction.create({
-        data: {
-          userCreditId: userCredit.id,
-          amount: 10.0,
-          type: 'bonus',
-          description: 'Bônus de boas-vindas'
-        }
-      });
+      // Registrar transação inicial (apenas se o usuário foi realmente criado)
+      try {
+        await prisma.creditTransaction.create({
+          data: {
+            userCreditId: userCredit.id,
+            amount: 10.0,
+            type: 'bonus',
+            description: 'Bônus de boas-vindas'
+          }
+        });
+      } catch (transError) {
+        console.warn('Não foi possível criar transação inicial:', transError);
+        // Continua mesmo se a transação falhar
+      }
     }
 
     // Obter transações recentes
