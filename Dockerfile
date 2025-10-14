@@ -29,6 +29,11 @@ RUN npx prisma generate
 # ------------------------------------------------------------------------------
 FROM node:20-alpine AS builder
 
+# Argumentos de build para variáveis sensíveis (disponíveis em todos os stages)
+ARG DATABASE_URL
+ARG NEXTAUTH_SECRET
+ARG NEXTAUTH_URL
+
 WORKDIR /app
 
 # Copiar node_modules do stage anterior (evita reinstalar)
@@ -38,13 +43,18 @@ COPY --from=deps /app/prisma ./prisma
 # Copiar código fonte
 COPY . .
 
-# Copiar variáveis de ambiente de produção para o build
-COPY .env.production .env
+# Argumentos de build para variáveis sensíveis
+ARG DATABASE_URL
+ARG NEXTAUTH_SECRET
+ARG NEXTAUTH_URL
 
 # Variáveis de ambiente necessárias para build
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 ENV SKIP_ENV_VALIDATION=1
+ENV DATABASE_URL=${DATABASE_URL}
+ENV NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+ENV NEXTAUTH_URL=${NEXTAUTH_URL}
 
 # Build da aplicação Next.js com output standalone
 # standalone cria uma versão mínima autocontida da aplicação
@@ -98,7 +108,11 @@ CMD ["node", "server.js"]
 # INSTRUÇÕES DE USO:
 # ==============================================================================
 # Build:
-#   docker build -t maneger-project:latest .
+#   docker build \
+#     --build-arg DATABASE_URL="postgresql://..." \
+#     --build-arg NEXTAUTH_SECRET="..." \
+#     --build-arg NEXTAUTH_URL="http://localhost:3000" \
+#     -t maneger-project:latest .
 #
 # Run local:
 #   docker run -p 3000:3000 \
@@ -108,7 +122,11 @@ CMD ["node", "server.js"]
 #     maneger-project:latest
 #
 # Build com cache (recomendado):
-#   docker build --build-arg BUILDKIT_INLINE_CACHE=1 \
+#   docker build \
+#     --build-arg BUILDKIT_INLINE_CACHE=1 \
+#     --build-arg DATABASE_URL="postgresql://..." \
+#     --build-arg NEXTAUTH_SECRET="..." \
+#     --build-arg NEXTAUTH_URL="http://localhost:3000" \
 #     -t maneger-project:latest .
 #
 # ==============================================================================
