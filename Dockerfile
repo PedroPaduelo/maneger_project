@@ -38,6 +38,9 @@ COPY --from=deps /app/prisma ./prisma
 # Copiar código fonte
 COPY . .
 
+# Copiar variáveis de ambiente de produção para o build
+COPY .env.production .env
+
 # Variáveis de ambiente necessárias para build
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
